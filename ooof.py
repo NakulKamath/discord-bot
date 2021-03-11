@@ -58,7 +58,7 @@ async def sets(context, channel: discord.TextChannel=None):
         em = discord.Embed(description=f"{bot.CROSS_MARK} You must provide a channel for this command!")
         await context.send(embed=em)
     else:
-        bot.data['schn'][str(context.guild.id)] = channel.id
+        bot.data['suggest']['chn'][str(context.guild.id)] = channel.id
 
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -409,7 +409,7 @@ async def userinfo(context, *, user: discord.Member = None):
     verified = not user.pending
     em.add_field(name="Verified", value=str(verified))
     em.set_footer(text='USER ID: ' + str(user.id))
-    return await context.send(embed=em)
+    await context.send(embed=em)
 
     await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1358,9 +1358,16 @@ async def on_guild_join(guild):
     bot.data['logs'][str(guild.id)] = None
     bot.data['widt'] = str(guild.id)
     bot.data['widt'][str(guild.id)] = None
-    bot.data['suggest']['chn'] = str(guild.id)
-    bot.data['schn']['chn'][str(guild.id)] = None
 
+    bot.data['suggest']['chn'] = str(guild.id)
+    bot.data['suggest']['chn'][str(guild.id)] = None
+    bot.data['suggest']['count'] = str(guild.id)
+    bot.data['suggest']['count'][str(guild.id)] = 1
+
+    bot.data['ticket']['chn'] = str(guild.id)
+    bot.data['ticket']['chn'][str(guild.id)] = None
+    bot.data['ticket']['count'] = str(guild.id)
+    bot.data['ticket']['count'][str(guild.id)] = 1
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
