@@ -730,7 +730,7 @@ async def on_guild_channel_update(before, after):
     em.add_field(name="After", value=valuea)
     em.set_thumbnail(url=before.guild.icon_url)
     em.set_footer(text="ROLE ID: " + str(before.id))
-    if valuea != None and valueb != None:
+    if valuea != "" and valueb != "":
         await log_chat.send(embed=em)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
