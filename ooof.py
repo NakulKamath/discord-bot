@@ -30,6 +30,159 @@ kicks = False
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command()
+async def suggest(context, *, msg=None):
+    chn = bot.get_channel(bot.data['suggest']['chn'][str(context.guild.id)])
+    num = bot.data['suggest']['count'][str(context.guild.id)]
+    if bot.data['suggest']['chn'][str(context.guild.id)] == "":
+        em = discord.Embed(description=f"{bot.CROSS_MARK} This server doesn't have a suggestion channel set up!\n Ask the moderators to run the `$setsuggest` command!")
+        await context.send(embed=em)
+        return
+    else:
+        if msg != None:
+            em = discord.Embed(title=f"Suggestion #{num}", description=msg)
+            em.set_author(name=context.message.author, icon_url=context.message.author.avatar_url)
+            m1 =  await chn.send(embed=em)
+            await m1.add_reaction(f"{bot.TICK_MARK}")
+            await m1.add_reaction(f"{bot.CROSS_MARK}")
+            await context.message.delete()
+            em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully sent suggestion!")
+            mes = await context.send(embed=em)
+            await asyncio.sleep(5)
+            await mes.delete()
+            bot.data['suggest']['val'][str(context.guild.id)][str(num)] = {}
+            bot.data['suggest']['val'][str(context.guild.id)][str(num)]['author'] = str(context.message.author)
+            bot.data['suggest']['val'][str(context.guild.id)][str(num)]['msg'] = str(msg)
+            bot.data['suggest']['val'][str(context.guild.id)][str(num)]['icon'] = str(context.message.author.avatar_url)
+            bot.data['suggest']['val'][str(context.guild.id)][str(num)]['link'] = str(m1.jump_url)
+            bot.data['suggest']['count'][str(context.guild.id)] = bot.data['suggest']['count'][str(context.guild.id)] + 1
+        else:
+            em = discord.Embed(description=f"{bot.TICK_MARK} Please type your suggestion now!")
+            mess = await context.send(embed=em)
+            def check(m):
+                return m.author == context.message.author and m.channel == context.channel
+            try:
+                msgg = await bot.wait_for('message', timeout= 30, check=check)
+                await mess.delete()
+            except asyncio.TimeoutError:
+                em = discord.Embed(description=f"{bot.CROSS_MARK} You ran out of time! Please re-type the command!")
+                await context.channel.send(embed=em)
+                return
+            msg = msgg.content
+            em = discord.Embed(title=f"Suggestion #{num}", description=msg)
+            em.set_author(name=context.message.author, icon_url=context.message.author.avatar_url)
+            m1 =  await chn.send(embed=em)
+            await m1.add_reaction(f"{bot.TICK_MARK}")
+            await m1.add_reaction(f"{bot.CROSS_MARK}")
+            await context.message.delete()
+            await msgg.delete()
+            em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully sent suggestion!")
+            mes = await context.send(embed=em)
+            await asyncio.sleep(5)
+            await mes.delete()
+            bot.data['suggest']['val'][str(context.guild.id)][str(num)] = {}
+            bot.data['suggest']['val'][str(context.guild.id)][str(num)]['author'] = str(context.message.author)
+            bot.data['suggest']['val'][str(context.guild.id)][str(num)]['msg'] = str(msg)
+            bot.data['suggest']['val'][str(context.guild.id)][str(num)]['icon'] = str(context.message.author.avatar_url)
+            bot.data['suggest']['val'][str(context.guild.id)][str(num)]['link'] = str(m1.jump_url)
+            bot.data['suggest']['count'][str(context.guild.id)] = bot.data['suggest']['count'][str(context.guild.id)] + 1
+
+    await save()
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.command()
+@commands.has_permissions(kick_members=True)
+async def approve(context, no=None, *, reason=None):
+    log_chat = bot.get_channel(bot.data['suggest']['chn'][str(context.guild.id)])
+    if str(no) in bot.data['suggest']['val'][str(context.guild.id)]:
+        em = discord.Embed(title=f'Approved suggestion #{str(no)}', color=discord.Color.green())
+        em.add_field(name=f"Suggestion content", value=bot.data['suggest']['val'][str(context.guild.id)][str(no)]['msg'] + f" - [Suggestion!]({bot.data['suggest']['val'][str(context.guild.id)][str(no)]['link']})", inline=False)
+        em.add_field(name=f"Reason from {context.message.author.name}", value=reason, inline=False)
+        em.set_author(name=bot.data['suggest']['val'][str(context.guild.id)][str(no)]['author'], icon_url=bot.data['suggest']['val'][str(context.guild.id)][str(no)]['icon'])
+        await log_chat.send(embed=em)
+        em = discord.Embed(description=f"<:tick_mark:814801884358901770> Approved suggestion #{str(no)} for reason - {reason}!")
+        ems = await context.send(embed=em)
+        await context.message.delete()
+        await asyncio.sleep(5)
+        await ems.delete()
+        return
+    else:
+        em = discord.Embed(description=f"<:cross_mark:814801897138815026> Please provide a valid suggestion ID!")
+        await context.channel.send(embed=em)
+        return
+
+    await save()
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.command()
+@commands.has_permissions(kick_members=True)
+async def deny(context, no=None, *, reason=None):
+    log_chat = bot.get_channel(bot.data['suggest']['chn'][str(context.guild.id)])
+    if str(no) in bot.data['suggest']['val'][str(context.guild.id)]:
+        em = discord.Embed(title=f'Denied suggestion #{str(no)}', color=discord.Color.red())
+        em.add_field(name=f"Suggestion content", value=bot.data['suggest']['val'][str(context.guild.id)][str(no)]['msg'] + f" - [Suggestion!]({bot.data['suggest']['val'][str(context.guild.id)][str(no)]['link']})", inline=False)
+        em.add_field(name=f"Reason from {context.message.author.name}", value=reason, inline=False)
+        em.set_author(name=bot.data['suggest']['val'][str(context.guild.id)][str(no)]['author'], icon_url=bot.data['suggest']['val'][str(context.guild.id)][str(no)]['icon'])
+        await log_chat.send(embed=em)
+        em = discord.Embed(description=f"<:tick_mark:814801884358901770> Denied suggestion #{str(no)} for reason - {reason}!")
+        ems = await context.send(embed=em)
+        await context.message.delete()
+        await asyncio.sleep(5)
+        await ems.delete()
+        return
+    else:
+        em = discord.Embed(description=f"<:cross_mark:814801897138815026> Please provide a valid suggestion ID!")
+        await context.channel.send(embed=em)
+        return
+
+    await save()
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.command()
+@commands.has_permissions(kick_members=True)
+async def consider(context, no=None, *, reason=None):
+    log_chat = bot.get_channel(bot.data['suggest']['chn'][str(context.guild.id)])
+    if str(no) in bot.data['suggest']['val'][str(context.guild.id)]:
+        em = discord.Embed(title=f'Considered suggestion #{str(no)}', color=discord.Color.blue())
+        em.add_field(name=f"Suggestion content", value=bot.data['suggest']['val'][str(context.guild.id)][str(no)]['msg'] + f" - [Suggestion!]({bot.data['suggest']['val'][str(context.guild.id)][str(no)]['link']})", inline=False)
+        em.add_field(name=f"Reason from {context.message.author.name}", value=reason, inline=False)
+        em.set_author(name=bot.data['suggest']['val'][str(context.guild.id)][str(no)]['author'], icon_url=bot.data['suggest']['val'][str(context.guild.id)][str(no)]['icon'])
+        await log_chat.send(embed=em)
+        em = discord.Embed(description=f"<:tick_mark:814801884358901770> Considered suggestion #{str(no)} for reason - {reason}!")
+        ems = await context.send(embed=em)
+        await context.message.delete()
+        await asyncio.sleep(5)
+        await ems.delete()
+        return
+    else:
+        em = discord.Embed(description=f"<:cross_mark:814801897138815026> Please provide a valid suggestion ID!")
+        await context.channel.send(embed=em)
+        return
+
+    await save()
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.command()
+@commands.has_permissions(kick_members=True)
+async def implement(context, no=None, *, reason=None):
+    log_chat = bot.get_channel(bot.data['suggest']['chn'][str(context.guild.id)])
+    if str(no) in bot.data['suggest']['val'][str(context.guild.id)]:
+        em = discord.Embed(title=f'Implemented suggestion #{str(no)}', color=discord.Color.purple())
+        em.add_field(name=f"Suggestion content", value=bot.data['suggest']['val'][str(context.guild.id)][str(no)]['msg'] + f" - [Suggestion!]({bot.data['suggest']['val'][str(context.guild.id)][str(no)]['link']})", inline=False)
+        em.add_field(name=f"Reason from {context.message.author.name}", value=reason, inline=False)
+        em.set_author(name=bot.data['suggest']['val'][str(context.guild.id)][str(no)]['author'], icon_url=bot.data['suggest']['val'][str(context.guild.id)][str(no)]['icon'])
+        await log_chat.send(embed=em)
+        em = discord.Embed(description=f"<:tick_mark:814801884358901770> Implemented suggestion #{str(no)} for reason - {reason}!")
+        ems = await context.send(embed=em)
+        await context.message.delete()
+        await asyncio.sleep(5)
+        await ems.delete()
+        return
+    else:
+        em = discord.Embed(description=f"<:cross_mark:814801897138815026> Please provide a valid suggestion ID!")
+        await context.channel.send(embed=em)
+        return
+
+    await save()
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.command()
 @commands.has_permissions(manage_messages=True)
 async def setl(context, channel: discord.TextChannel=None):
     if channel == None:
@@ -109,7 +262,7 @@ async def resets(context):
         em = discord.Embed(description=f"{bot.CROSS_MARK} You ran out of time! Please re-type the command!")
         await context.channel.send(embed=em)
         return
-    if msg.upper() == 'YES':
+    if msg.content.upper() == 'YES':
         bot.data['suggest']['count'][str(context.guild.id)] = 1
         bot.data['suggest']['val'][str(context.guild.id)] = {}
         em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully reset suggestion count!")
@@ -142,7 +295,7 @@ async def resett(context):
         em = discord.Embed(description=f"{bot.CROSS_MARK} You ran out of time! Please re-type the command!")
         await context.channel.send(embed=em)
         return
-    if msg.upper() == 'YES':
+    if msg.content.upper() == 'YES':
         bot.data['ticket']['count'][str(context.guild.id)] = 1
         bot.data['ticket']['val'][str(context.guild.id)] = {}
         em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully reset ticket count!")
@@ -677,7 +830,7 @@ async def on_raw_message_edit(payload):
 @bot.event
 async def on_raw_message_delete(payload):
     message = payload.cached_message
-    log_chat = bot.get_channel(bot.data['logs'][str(message.guild.id)])  
+    log_chat = bot.get_channel(bot.data['logs'][str(payload.guild_id)])  
     if str(message.content) == "":
         return
     channel = message.channel
@@ -755,7 +908,7 @@ async def on_member_update(before, after):
                 em.set_thumbnail(url=after.avatar_url)
                 await log_chat.send(embed=em)
 
-    if before.nick != after.nick:
+    elif before.nick != after.nick:
         if after.nick == None:
             before.nick = before.nick
             em = discord.Embed(description=f"**Nickname removed for** - {after.mention}", color=discord.Color.blue())
@@ -781,6 +934,9 @@ async def on_member_update(before, after):
                 em.set_thumbnail(url=after.avatar_url)
                 em.set_footer(text="USER ID: " + str(after.id)) 
         await log_chat.send(embed=em)
+    else:
+        await save()
+        return
 
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
