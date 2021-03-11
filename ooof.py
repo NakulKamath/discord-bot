@@ -37,6 +37,12 @@ async def setl(context, channel: discord.TextChannel=None):
         await context.send(embed=em)
     else:
         bot.data['logs'][str(context.guild.id)] = channel.id
+        em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully set logs channel as - {channel.mention}!")
+        mes = await context.send(embed=em)
+        await asyncio.sleep(5)
+        await context.message.delete()
+        await mes.delete()
+
 
     await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -48,6 +54,11 @@ async def setw(context, channel: discord.TextChannel=None):
         await context.send(embed=em)
     else:
         bot.data['widt'][str(context.guild.id)] = channel.id
+        em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully set widt channel as - {channel.mention}!")
+        mes = await context.send(embed=em)
+        await asyncio.sleep(5)
+        await context.message.delete()
+        await mes.delete()
 
     await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -59,43 +70,97 @@ async def sets(context, channel: discord.TextChannel=None):
         await context.send(embed=em)
     else:
         bot.data['suggest']['chn'][str(context.guild.id)] = channel.id
+        em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully set suggestions channel as - {channel.mention}!")
+        mes = await context.send(embed=em)
+        await asyncio.sleep(5)
+        await context.message.delete()
+        await mes.delete()
+
 
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@bot.command(aliases=['setreport'])
+@bot.command(aliases=['setticket'])
 @commands.has_permissions(manage_messages=True)
-async def setr(context, channel: discord.TextChannel=None):
+async def sett(context, channel: discord.TextChannel=None):
     if channel == None:
         em = discord.Embed(description=f"{bot.CROSS_MARK} You must provide a channel for this command!")
         await context.send(embed=em)
     else:
         bot.data['schn'][str(context.guild.id)] = channel.id
+        em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully set ticket channel as - {channel.mention}!")
+        mes = await context.send(embed=em)
+        await asyncio.sleep(5)
+        await context.message.delete()
+        await mes.delete()
+
 
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.command(aliases=['resetsuggest'])
+@commands.has_permissions(manage_messages=True)
+async def resets(context):
+    em = discord.Embed(description=f"{bot.CROSS_MARK} Are you sure you want to reset the suggestion count?\n Type yes to proceed!")
+    await context.send(embed=em)
+    def check(m):
+        return m.author == context.message.author and m.channel == context.channel
+    try:
+        msg = await bot.wait_for('message', timeout= 30, check=check)
+    except asyncio.TimeoutError:
+        em = discord.Embed(description=f"{bot.CROSS_MARK} You ran out of time! Please re-type the command!")
+        await context.channel.send(embed=em)
+        return
+    if msg.upper() == 'YES':
+        bot.data['suggest']['count'][str(context.guild.id)] = 1
+        bot.data['suggest']['val'][str(context.guild.id)] = {}
+        em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully reset suggestion count!")
+        mes = await context.send(embed=em)
+        await context.message.delete()
+        await msg.delete()
+        await asyncio.sleep(5)
+        await mes.delete()
+    else:
+        em = discord.Embed(description=f"{bot.CROSS_MARK} Process cancelled!")
+        mes = await context.channel.send(embed=em)
+        await context.message.delete()
+        await msg.delete()
+        await asyncio.sleep(5)
+        await mes.delete()
+        return
 
+    await save()
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.command(aliases=['resetticket'])
+@commands.has_permissions(manage_messages=True)
+async def resett(context):
+    em = discord.Embed(description=f"{bot.CROSS_MARK} Are you sure you want to reset the ticket count?\n Type yes to proceed!")
+    await context.send(embed=em)
+    def check(m):
+        return m.author == context.message.author and m.channel == context.channel
+    try:
+        msg = await bot.wait_for('message', timeout= 30, check=check)
+    except asyncio.TimeoutError:
+        em = discord.Embed(description=f"{bot.CROSS_MARK} You ran out of time! Please re-type the command!")
+        await context.channel.send(embed=em)
+        return
+    if msg.upper() == 'YES':
+        bot.data['ticket']['count'][str(context.guild.id)] = 1
+        bot.data['ticket']['val'][str(context.guild.id)] = {}
+        em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully reset ticket count!")
+        mes = await context.send(embed=em)
+        await context.message.delete()
+        await msg.delete()
+        await asyncio.sleep(5)
+        await mes.delete()
+    else:
+        em = discord.Embed(description=f"{bot.CROSS_MARK} Process cancelled!")
+        mes = await context.channel.send(embed=em)
+        await context.message.delete()
+        await msg.delete()
+        await asyncio.sleep(5)
+        await mes.delete()
+        return
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1354,20 +1419,17 @@ async def on_user_update(before, after):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_join(guild):
-    bot.data['logs'] = str(guild.id)
-    bot.data['logs'][str(guild.id)] = None
-    bot.data['widt'] = str(guild.id)
-    bot.data['widt'][str(guild.id)] = None
+    bot.data['logs'][str(guild.id)] = ""
 
-    bot.data['suggest']['chn'] = str(guild.id)
-    bot.data['suggest']['chn'][str(guild.id)] = None
-    bot.data['suggest']['count'] = str(guild.id)
+    bot.data['widt'][str(guild.id)] = ""
+
+    bot.data['suggest']['chn'][str(guild.id)] = ""
     bot.data['suggest']['count'][str(guild.id)] = 1
+    bot.data['suggest']['val'][str(guild.id)] = {}
 
-    bot.data['ticket']['chn'] = str(guild.id)
-    bot.data['ticket']['chn'][str(guild.id)] = None
-    bot.data['ticket']['count'] = str(guild.id)
+    bot.data['ticket']['chn'][str(guild.id)] = ""
     bot.data['ticket']['count'][str(guild.id)] = 1
+    bot.data['suggest']['val'][str(guild.id)] = {}
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
