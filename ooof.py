@@ -40,7 +40,7 @@ async def setl(context, channel: discord.TextChannel=None):
 
     await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@bot.command()
+@bot.command(aliases=['setwidt'])
 @commands.has_permissions(manage_messages=True)
 async def setw(context, channel: discord.TextChannel=None):
     if channel == None:
@@ -51,7 +51,7 @@ async def setw(context, channel: discord.TextChannel=None):
 
     await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@bot.command()
+@bot.command(aliases=['setsuggest'])
 @commands.has_permissions(manage_messages=True)
 async def sets(context, channel: discord.TextChannel=None):
     if channel == None:
@@ -62,7 +62,17 @@ async def sets(context, channel: discord.TextChannel=None):
 
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.command(aliases=['setreport'])
+@commands.has_permissions(manage_messages=True)
+async def setr(context, channel: discord.TextChannel=None):
+    if channel == None:
+        em = discord.Embed(description=f"{bot.CROSS_MARK} You must provide a channel for this command!")
+        await context.send(embed=em)
+    else:
+        bot.data['schn'][str(context.guild.id)] = channel.id
 
+    await save()
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 
@@ -1348,8 +1358,8 @@ async def on_guild_join(guild):
     bot.data['logs'][str(guild.id)] = None
     bot.data['widt'] = str(guild.id)
     bot.data['widt'][str(guild.id)] = None
-    bot.data['schn'] = str(guild.id)
-    bot.data['schn'][str(guild.id)] = None
+    bot.data['suggest']['chn'] = str(guild.id)
+    bot.data['schn']['chn'][str(guild.id)] = None
 
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
