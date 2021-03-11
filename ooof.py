@@ -836,222 +836,223 @@ async def on_guild_role_update(before, after):
         valueb += f"**Color** - {str(before.color)}\n"
         valuea += f"**Color** - {str(after.color)}\n"
     if before.permissions.add_reactions != after.permissions.add_reactions:
-        if after.permission.add_reactions == True:
-            emoji == bot.TICK_MARK
-        if after.permission.add_reactions == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**add_reactions** `{after.permissions.add_reactions}`{emoji}\n"
+        if after.permissions.add_reactions == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.add_reactions == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**add_reactions** `{after.permissions.add_reactions}`\n"
     if before.permissions.administrator != after.permissions.administrator:
-        if after.permission.administrator == True:
-            emoji == bot.TICK_MARK
-        if after.permission.administrator == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**administrator** `{after.permissions.administrator}`\n"
+        if after.permissions.administrator == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.administrator == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**administrator** `{after.permissions.administrator}`\n"
     if before.permissions.attach_files != after.permissions.attach_files:
-        if after.permission.attach_files == True:
-            emoji == bot.TICK_MARK
-        if after.permission.attach_files == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**attach_files** `{after.permissions.attach_files}`\n"
+        if after.permissions.attach_files == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.attach_files == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**attach_files** `{after.permissions.attach_files}`\n"
     if before.permissions.ban_members != after.permissions.ban_members:
-        if after.permission.ban_members == True:
-            emoji == bot.TICK_MARK
-        if after.permission.ban_members == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**ban_members** `{after.permissions.ban_members}`\n"
+        if after.permissions.ban_members == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.ban_members == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**ban_members** `{after.permissions.ban_members}`\n"
     if before.permissions.change_nickname != after.permissions.change_nickname:
-        if after.permission.change_nickname == True:
-            emoji == bot.TICK_MARK
-        if after.permission.change_nickname == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**change_nickname** `{after.permissions.change_nickname}`\n"
+        if after.permissions.change_nickname == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.change_nickname == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**change_nickname** `{after.permissions.change_nickname}`\n"
     if before.permissions.connect != after.permissions.connect:
-        if after.permission.connect == True:
-            emoji == bot.TICK_MARK
-        if after.permission.connect == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**connect** `{after.permissions.connect}`\n"
+        if after.permissions.connect == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.connect == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**connect** `{after.permissions.connect}`\n"
     if before.permissions.create_instant_invite != after.permissions.create_instant_invite:
-        if after.permission.create_instant_invite == True:
-            emoji == bot.TICK_MARK
-        if after.permission.create_instant_invite == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**create_instant_invite** `{after.permissions.create_instant_invite}`\n"
+        if after.permissions.create_instant_invite == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.create_instant_invite == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**create_instant_invite** `{after.permissions.create_instant_invite}`\n"
     if before.permissions.deafen_members != after.permissions.deafen_members:
-        if after.permission.deafen_members == True:
-            emoji == bot.TICK_MARK
-        if after.permission.deafen_members == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**deafen_members** `{after.permissions.deafen_members}`\n"
+        if after.permissions.deafen_members == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.deafen_members == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**deafen_members** `{after.permissions.deafen_members}`\n"
     if before.permissions.embed_links != after.permissions.embed_links:
-        if after.permission.embed_links == True:
-            emoji == bot.TICK_MARK
-        if after.permission.embed_links == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**embed_links** `{after.permissions.embed_links}`\n"
+        if after.permissions.embed_links == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.embed_links == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**embed_links** `{after.permissions.embed_links}`\n"
     if before.permissions.external_emojis != after.permissions.external_emojis:
-        if after.permission.external_emojis == True:
-            emoji == bot.TICK_MARK
-        if after.permission.external_emojis == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**external_emojis** `{after.permissions.external_emojis}`\n"
+        if after.permissions.external_emojis == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.external_emojis == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**external_emojis** `{after.permissions.external_emojis}`\n"
     if before.permissions.kick_members != after.permissions.kick_members:
-        if after.permission.kick_members == True:
-            emoji == bot.TICK_MARK
-        if after.permission.kick_members == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**kick_members** `{after.permissions.kick_members}`\n"
+        if after.permissions.kick_members == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.kick_members == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**kick_members** `{after.permissions.kick_members}`\n"
     if before.permissions.manage_channels != after.permissions.manage_channels:
-        if after.permission.manage_channels == True:
-            emoji == bot.TICK_MARK
-        if after.permission.manage_channels == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**manage_channels** `{after.permissions.manage_channels}`\n"
+        if after.permissions.manage_channels == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.manage_channels == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**manage_channels** `{after.permissions.manage_channels}`\n"
     if before.permissions.manage_emojis != after.permissions.manage_emojis:
-        if after.permission.manage_emojis == True:
-            emoji == bot.TICK_MARK
-        if after.permission.manage_emojis == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**manage_emojis** `{after.permissions.manage_emojis}`\n"
+        if after.permissions.manage_emojis == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.manage_emojis == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**manage_emojis** `{after.permissions.manage_emojis}`\n"
     if before.permissions.manage_guild != after.permissions.manage_guild:
-        if after.permission.manage_guild == True:
-            emoji == bot.TICK_MARK
-        if after.permission.manage_guild == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**manage_guild** `{after.permissions.manage_guild}`\n"
+        if after.permissions.manage_guild == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.manage_guild == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**manage_guild** `{after.permissions.manage_guild}`\n"
     if before.permissions.manage_messages != after.permissions.manage_messages:
-        if after.permission.manage_messages == True:
-            emoji == bot.TICK_MARK
-        if after.permission.manage_messages == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**manage_messages** `{after.permissions.manage_messages}`\n"
+        if after.permissions.manage_messages == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.manage_messages == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**manage_messages** `{after.permissions.manage_messages}`\n"
     if before.permissions.manage_nicknames != after.permissions.manage_nicknames:
-        if after.permission.manage_nicknames == True:
-            emoji == bot.TICK_MARK
-        if after.permission.manage_nicknames == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**manage_nicknames** `{after.permissions.manage_nicknames}`\n"
+        if after.permissions.manage_nicknames == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.manage_nicknames == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**manage_nicknames** `{after.permissions.manage_nicknames}`\n"
     if before.permissions.manage_permissions != after.permissions.manage_permissions:
-        if after.permission.manage_permissions == True:
-            emoji == bot.TICK_MARK
-        if after.permission.manage_permissions == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**manage_permissions** `{after.permissions.manage_permissions}`\n"
+        if after.permissions.manage_permissions == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.manage_permissions == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**manage_permissions** `{after.permissions.manage_permissions}`\n"
     if before.permissions.manage_roles != after.permissions.manage_roles:
-        if after.permission.manage_roles == True:
-            emoji == bot.TICK_MARK
-        if after.permission.manage_roles == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**manage_roles** `{after.permissions.manage_roles}`\n"
+        if after.permissions.manage_roles == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.manage_roles == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**manage_roles** `{after.permissions.manage_roles}`\n"
     if before.permissions.manage_webhooks != after.permissions.manage_webhooks:
-        if after.permission.manage_webhooks == True:
-            emoji == bot.TICK_MARK
-        if after.permission.manage_webhooks == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**manage_webhooks** `{after.permissions.manage_webhooks}`\n"
+        if after.permissions.manage_webhooks == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.manage_webhooks == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**manage_webhooks** `{after.permissions.manage_webhooks}`\n"
     if before.permissions.mention_everyone != after.permissions.mention_everyone:
-        if after.permission.mention_everyone == True:
-            emoji == bot.TICK_MARK
-        if after.permission.mention_everyone == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**mention_everyone** `{after.permissions.mention_everyone}`\n"
+        if after.permissions.mention_everyone == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.mention_everyone == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**mention_everyone** `{after.permissions.mention_everyone}`\n"
     if before.permissions.move_members != after.permissions.move_members:
-        if after.permission.move_members == True:
-            emoji == bot.TICK_MARK
-        if after.permission.move_members == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**move_members** `{after.permissions.move_members}`\n"
+        if after.permissions.move_members == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.move_members == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**move_members** `{after.permissions.move_members}`\n"
     if before.permissions.mute_members != after.permissions.mute_members:
-        if after.permission.mute_members == True:
-            emoji == bot.TICK_MARK
-        if after.permission.mute_members == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**mute_members** `{after.permissions.mute_members}`\n"
+        if after.permissions.mute_members == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.mute_members == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**mute_members** `{after.permissions.mute_members}`\n"
     if before.permissions.priority_speaker != after.permissions.priority_speaker:
-        if after.permission.priority_speaker == True:
-            emoji == bot.TICK_MARK
-        if after.permission.priority_speaker == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**priority_speaker** `{after.permissions.priority_speaker}`\n"
+        if after.permissions.priority_speaker == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.priority_speaker == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**priority_speaker** `{after.permissions.priority_speaker}`\n"
     if before.permissions.read_message_history != after.permissions.read_message_history:
-        if after.permission.read_message_history == True:
-            emoji == bot.TICK_MARK
-        if after.permission.read_message_history == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**read_message_history** `{after.permissions.read_message_history}`\n"
+        if after.permissions.read_message_history == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.read_message_history == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**read_message_history** `{after.permissions.read_message_history}`\n"
     if before.permissions.read_messages != after.permissions.read_messages:
-        if after.permission.read_messages == True:
-            emoji == bot.TICK_MARK
-        if after.permission.read_messages == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**read_messages** `{after.permissions.read_messages}`\n"
+        if after.permissions.read_messages == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.read_messages == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**read_messages** `{after.permissions.read_messages}`\n"
     if before.permissions.send_messages != after.permissions.send_messages:
-        if after.permission.send_messages == True:
-            emoji == bot.TICK_MARK
-        if after.permission.send_messages == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**send_messages** `{after.permissions.send_messages}`\n"
+        if after.permissions.send_messages == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.send_messages == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**send_messages** `{after.permissions.send_messages}`\n"
     if before.permissions.send_tts_messages != after.permissions.send_tts_messages:
-        if after.permission.send_tts_messages == True:
-            emoji == bot.TICK_MARK
-        if after.permission.send_tts_messages == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**send_tts_messages** `{after.permissions.send_tts_messages}`\n"
+        if after.permissions.send_tts_messages == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.send_tts_messages == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**send_tts_messages** `{after.permissions.send_tts_messages}`\n"
     if before.permissions.speak != after.permissions.speak:
-        if after.permission.speak == True:
-            emoji == bot.TICK_MARK
-        if after.permission.speak == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**speak** `{after.permissions.speak}`\n"
+        if after.permissions.speak == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.speak == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**speak** `{after.permissions.speak}`\n"
     if before.permissions.stream != after.permissions.stream:
-        if after.permission.stream == True:
-            emoji == bot.TICK_MARK
-        if after.permission.stream == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**stream** `{after.permissions.stream}`\n"
+        if after.permissions.stream == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.stream == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**stream** `{after.permissions.stream}`\n"
     if before.permissions.use_external_emojis != after.permissions.use_external_emojis:
-        if after.permission.use_external_emojis == True:
-            emoji == bot.TICK_MARK
-        if after.permission.use_external_emojis == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**use_external_emojis** `{after.permissions.use_external_emojis}`\n"
+        if after.permissions.use_external_emojis == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.use_external_emojis == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**use_external_emojis** `{after.permissions.use_external_emojis}`\n"
     if before.permissions.use_voice_activation != after.permissions.use_voice_activation:
-        if after.permission.use_voice_activation == True:
-            emoji == bot.TICK_MARK
-        if after.permission.use_voice_activation == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**use_voice_activation** `{after.permissions.use_voice_activation}`\n"
+        if after.permissions.use_voice_activation == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.use_voice_activation == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**use_voice_activation** `{after.permissions.use_voice_activation}`\n"
     if before.permissions.view_audit_log != after.permissions.view_audit_log:
-        if after.permission.view_audit_log == True:
-            emoji == bot.TICK_MARK
-        if after.permission.view_audit_log == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**view_audit_log** `{after.permissions.view_audit_log}`\n"
+        if after.permissions.view_audit_log == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.view_audit_log == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**view_audit_log** `{after.permissions.view_audit_log}`\n"
     if before.permissions.view_guild_insights != after.permissions.view_guild_insights:
-        if after.permission.view_guild_insights == True:
-            emoji == bot.TICK_MARK
-        if after.permission.view_guild_insights == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**view_guild_insights** `{after.permissions.view_guild_insights}`\n"
+        if after.permissions.view_guild_insights == True:
+            emoji = bot.TICK_MARK
+        if after.permissions.view_guild_insights == False:
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**view_guild_insights** `{after.permissions.view_guild_insights}`\n"
     if before.hoist != after.hoist:
         if after.hoist == True:
-            emoji == bot.TICK_MARK
+            emoji = bot.TICK_MARK
         if after.hoist == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**display_seperately** `{after.hoist}`\n"
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**display_seperately** `{after.hoist}`\n"
     if before.mentionable != after.mentionable:
         if after.mentionable == True:
-            emoji == bot.TICK_MARK
+            emoji = bot.TICK_MARK
         if after.mentionable == False:
-            emoji == bot.CROSS_MARK 
-        permissions += f"**mentionable** `{after.mentionable}`\n"
+            emoji = bot.CROSS_MARK 
+        permissions += f"{emoji}**mentionable** `{after.mentionable}`\n"
     if valuea == "":
         valuea = None
     if valueb == "":
         valueb = None
     em.add_field(name="Before", value=valueb)
     em.add_field(name="After", value=valuea)
-    em.add_field(name="Permissions", value=permissions)
+    if permissions != "":
+        em.add_field(name="Permissions", value=permissions)
     em.set_thumbnail(url=before.guild.icon_url)
     em.set_footer(text="ROLE ID: " + str(before.id))
     await log_chat.send(embed=em)
@@ -1179,23 +1180,24 @@ async def on_voice_state_update(member, before, after):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_user_update(before, after):
-    log_chat = bot.get_channel(bot.data['logs'][str(after.guild.id)])
-    if before.avatar != after.avatar:
-        emold = discord.Embed(title=f"{before.display_name}'s Avatar Updated", description="Before", color=discord.Color.blue())
-        emold.set_image(url=before.avatar_url)
-        emold.set_footer(text="USER ID: " + str(before.id))
-        await log_chat.send(embed=emold)
-        emnew = discord.Embed(title=f"{before.display_name}'s Avatar Updated", description="After", color=discord.Color.blue())
-        emnew.set_image(url=after.avatar_url)
-        emnew.set_footer(text="USER ID: " + str(before.id))
-        await log_chat.send(embed=emnew)
-    else:
-        em = discord.Embed(title=f"{before.display_name}'s Name/Discriminator Updated", color=discord.Color.blue())
-        em.add_field(name="Before", value=f"`{before.name}#{before.discriminator}`", inline=False)
-        em.add_field(name="After", value=f"`{after.name}#{after.discriminator}`", inline=False)
-        em.set_footer(text="USER ID: " + str(before.id))
-        em.set_thumbnail(url=before.avatar_url)
-        await log_chat.send(embed=em)
+    for guild in bot.data['logs']:
+        log_chat = bot.get_channel(bot.data['logs'][str(guild)])
+        if before.avatar != after.avatar:
+            emold = discord.Embed(title=f"{before.display_name}'s Avatar Updated", description="Before", color=discord.Color.blue())
+            emold.set_image(url=before.avatar_url)
+            emold.set_footer(text="USER ID: " + str(before.id))
+            await log_chat.send(embed=emold)
+            emnew = discord.Embed(title=f"{before.display_name}'s Avatar Updated", description="After", color=discord.Color.blue())
+            emnew.set_image(url=after.avatar_url)
+            emnew.set_footer(text="USER ID: " + str(before.id))
+            await log_chat.send(embed=emnew)
+        else:
+            em = discord.Embed(title=f"{before.display_name}'s Name/Discriminator Updated", color=discord.Color.blue())
+            em.add_field(name="Before", value=f"`{before.name}#{before.discriminator}`", inline=False)
+            em.add_field(name="After", value=f"`{after.name}#{after.discriminator}`", inline=False)
+            em.set_footer(text="USER ID: " + str(before.id))
+            em.set_thumbnail(url=before.avatar_url)
+            await log_chat.send(embed=em)
 
 
 
