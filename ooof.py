@@ -17,14 +17,78 @@ async def save():
             json.dump(bot.data, f, indent=4)
 
         await asyncio.sleep(1)
-
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 bot.admin_roles = ["staff", "Mods"]
 bot.server_developer_role = "Server Developers"
 bot.TICK_MARK = "<:tick_mark:814801884358901770>"
 bot.CROSS_MARK = "<:cross_mark:814801897138815026>"
 ban_reason = ""
 kicks = False
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.command()
+@commands.has_permissions(manage_messages=True)
+async def setl(context, channel: discord.TextChannel=None):
+    if channel == None:
+        em = discord.Embed(description=f"{bot.CROSS_MARK} You must provide a channel for this command!")
+        await context.send(embed=em)
+    else:
+        bot.data['logs'][str(context.guild.id)] = channel.id
 
+    await save()
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.command()
+@commands.has_permissions(manage_messages=True)
+async def setw(context, channel: discord.TextChannel=None):
+    if channel == None:
+        em = discord.Embed(description=f"{bot.CROSS_MARK} You must provide a channel for this command!")
+        await context.send(embed=em)
+    else:
+        bot.data['widt'][str(context.guild.id)] = channel.id
+
+    await save()
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.command()
+@commands.has_permissions(manage_messages=True)
+async def sets(context, channel: discord.TextChannel=None):
+    if channel == None:
+        em = discord.Embed(description=f"{bot.CROSS_MARK} You must provide a channel for this command!")
+        await context.send(embed=em)
+    else:
+        bot.data['schn'][str(context.guild.id)] = channel.id
+
+    await save()
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # on message event handler - handles a lot of the anti blocking, logging. - Even Recieves all messages,
 # including DMs and from itself
 @bot.event
@@ -45,7 +109,7 @@ async def on_message(msg):
     except AttributeError:
         # It is a DM channel message - It has no guild
         pass
-
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # TICKET LOGGER
     try:
         # get all currently open tickets
@@ -68,7 +132,7 @@ async def on_message(msg):
     except AttributeError:
         # DM channel - it has no guild attribute.
         pass
-
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # ATTACHMENT LOGGER
     if msg.attachments and not isinstance(msg.channel, discord.channel.DMChannel):  # only log non DMs
         if msg.channel.id != chn.id and msg.channel.id != log_save_id:  # If the message is not in log channel - done to prevent infinite loop
@@ -108,7 +172,7 @@ async def on_message(msg):
                 else:
                     # cant send attachment, too large!
                     await chn.send(msge+"\n**Couldn't Log attachment - Too large (Larger than 8000000 Bytes)**\n")
-
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # INVITE BLOCKER
     if msg.content.find("discord.gg") != -1 and not isinstance(msg.channel, discord.channel.DMChannel):
         # if message has discord.gg type invite
@@ -149,7 +213,7 @@ async def on_message(msg):
             await chn.send(f"{msg.author.mention} | {msg.author.id} did a invite in {msg.channel}.")
             await msg.delete()
             return
-
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # return prefix if bot is tagged (tag must be first in the msg)
     if msg.content.startswith(f"<@!{bot.user.id}>"):
         await msg.channel.send(f"Hey there, my prefix is {bot.command_prefix}")
@@ -157,7 +221,9 @@ async def on_message(msg):
     # process the message normally (as in command)
     await bot.process_commands(msg)
 
-
+    await save()
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # The edit event - all message edits are detected here
 @bot.event
 async def on_message_edit(before, after):
@@ -205,7 +271,9 @@ async def on_message_edit(before, after):
             await chn.send(f"{after.author.mention} | {after.author.id} did a EDIT invite in {after.channel}.")
             await after.delete()
 
-
+    await save()
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Master command ERROR HANDLER!
 @bot.event
 async def on_command_error(ctx, error):
@@ -240,6 +308,8 @@ async def on_command_error(ctx, error):
         await ctx.send(f"Internal Error!\n```{error}```\nPlease inform the moderators immediately.")
         raise error
 
+    await save()
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command(name="whoami")
 async def whoami(context):
@@ -247,10 +317,14 @@ async def whoami(context):
     author = context.message.author
     await channel.send("Hi, you are " + str(author.mention) + " and you are talking to **The Oracle** a bot made for **The Matrix**!! You are currently in the channel : " + str(channel.mention))
     await context.message.author.send("You can not let the other members on the server know about this... Its top secret stuff - you are an amazing person!! : )")
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command(name="ONION")
 async def onion(context):
     await context.send("https://cdn.discordapp.com/attachments/774156001993162793/814833307836481576/images.png")
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command(name="kick", pass_context = True)
 async def kick(context, member: discord.Member, *, reason=None):
@@ -277,6 +351,8 @@ async def kick(context, member: discord.Member, *, reason=None):
     else:
         em = discord.Embed(description=f"<:cross_mark:814801897138815026> You cannot kick yourself!")
         await context.send(embed=em)
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command(name="ban", pass_context = True)
 @commands.has_permissions(ban_members=True)
@@ -297,6 +373,8 @@ async def ban(context, member: discord.User, *, reason=None):
     else:
         em = discord.Embed(description=f"<:cross_mark:814801897138815026> You cannot ban yourself!")
         await context.send(embed=em)
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command(aliases=['ui', 'info', 'i'])
 async def userinfo(context, *, user: discord.Member = None):
@@ -322,6 +400,8 @@ async def userinfo(context, *, user: discord.Member = None):
     em.add_field(name="Verified", value=str(verified))
     em.set_footer(text='USER ID: ' + str(user.id))
     return await context.send(embed=em)
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command(aliases=['si', 'gi', 'guildinfo'])
 async def serverinfo(context):
@@ -348,6 +428,8 @@ async def serverinfo(context):
     em.set_image(url=context.guild.banner_url)
     em.set_footer(text="Server ID : " + id)
     await context.send(embed=em)
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command(aliases=["ci", "channeli", "cinfo"])
 async def channelinfo(context, *, channel: discord.TextChannel=None):
@@ -372,6 +454,8 @@ async def channelinfo(context, *, channel: discord.TextChannel=None):
         em.add_field(name="Overwritten Roles", value="None")
     em.set_thumbnail(url=context.guild.icon_url)
     await context.send(embed=em)
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command(aliases=["ri", "rolei", "rinfo"])
 async def roleinfo(context, *, role: discord.Role=None):
@@ -391,6 +475,8 @@ async def roleinfo(context, *, role: discord.Role=None):
                 em.add_field(name="Boost role/Bot role", value=str(role.tags.is_premium_subscriber()) + "/" + str(role.tags.is_bot_managed()))
         em.set_thumbnail(url=context.guild.icon_url)
     await context.send(embed=em)
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command()
 async def purge(context, limit=5, member: discord.Member=None):
@@ -410,6 +496,8 @@ async def purge(context, limit=5, member: discord.Member=None):
             msg.append(m)
     await context.channel.delete_messages(msg)
     await context.send(f"Purged {limit} messages of {member.mention}", delete_after=3)
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command(aliases=["a", "av"])
 async def avatar(context, member: discord.Member=None):
@@ -420,6 +508,8 @@ async def avatar(context, member: discord.Member=None):
     em.set_author(name=str(member), icon_url=member.avatar_url)
     em.set_footer(text="USER ID: " + str(member.id))
     await context.channel.send(embed=em)
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command(aliases=["servericon"])
 async def icon(context):
@@ -428,6 +518,8 @@ async def icon(context):
     em.set_author(name=str(context.message.author), icon_url=context.message.author.avatar_url)
     em.set_footer(text="SERVER ID: " + str(context.guild.id))
     await context.channel.send(embed=em)
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command(aliases=["serverbanner"])
 async def banner(context):
@@ -436,6 +528,8 @@ async def banner(context):
     em.set_author(name=str(context.message.author), icon_url=context.message.author.avatar_url)
     em.set_footer(text="SERVER ID: " + str(context.guild.id))
     await context.channel.send(embed=em)
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command(aliases=["owo"])
 async def owofy(context, message: discord.Message=None):
@@ -456,12 +550,16 @@ async def owofy(context, message: discord.Message=None):
     if na in message:
         msg.replace(na, nan)
     await context.channel.send(msg)
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_ready():
     await bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game("with the lives of RAIDERS"))
     print('Bot is now online!')
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_member_ban(guild, user):
@@ -473,6 +571,8 @@ async def on_member_ban(guild, user):
     em.set_author(name=user.name + "#" + user.discriminator, icon_url=user.avatar_url)
     em.set_thumbnail(url=user.avatar_url)
     await log_chat.send(embed=em)
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_raw_message_edit(payload):  
@@ -496,6 +596,8 @@ async def on_raw_message_edit(payload):
     em.set_author(name=str(after.author), icon_url=after.author.avatar_url)
     em.set_footer(text="MESSAGE ID: " + str(after.id))
     await log_chat.send(embed=em)
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_raw_message_delete(payload):
@@ -508,6 +610,8 @@ async def on_raw_message_delete(payload):
     em.set_author(name=str(message.author), icon_url=message.author.avatar_url)
     em.set_footer(text="MESSAGE ID: " + str(message.id))
     await log_chat.send(embed=em)
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_raw_bulk_message_delete(payload):
@@ -518,6 +622,8 @@ async def on_raw_bulk_message_delete(payload):
     em = discord.Embed(description=f"**Bulk message delete in {str(channel.mention)}** \n {str(message_contents)}", color=discord.Color.red())
     em.set_footer(text="CHANNEL ID: " + str(channel.id))
     await log_chat.send(embed=em)
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_member_join(member):
@@ -531,6 +637,8 @@ async def on_member_join(member):
     em.add_field(name="Registered", value=member.created_at.strftime(date_format), inline=False)
     em.set_footer(text="USER ID: " + str(member.id))
     await log_chat.send(embed=em)
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_member_remove(member):
@@ -550,6 +658,8 @@ async def on_member_remove(member):
             em.add_field(name="Roles [{}]".format(len(member.roles)-1), value=role_string, inline=False)
         em.set_footer(text="USER ID: " + str(member.id))
         await log_chat.send(embed=em)
+
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_member_update(before, after):
@@ -596,6 +706,8 @@ async def on_member_update(before, after):
                 em.set_thumbnail(url=after.avatar_url)
                 em.set_footer(text="USER ID: " + str(after.id)) 
         await log_chat.send(embed=em)
+
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_invite_create(invite):
@@ -607,6 +719,8 @@ async def on_invite_create(invite):
     em.set_thumbnail(url=invite.guild.icon_url)
     em.set_footer(text="USER ID: " + str(invite.inviter.id))
     await log_chat.send(embed=em)
+
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_invite_delete(invite):
@@ -617,6 +731,7 @@ async def on_invite_delete(invite):
     em.set_thumbnail(url=invite.guild.icon_url)
     await log_chat.send(embed=em)
 
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_channel_create(channel):
@@ -626,6 +741,8 @@ async def on_guild_channel_create(channel):
     em.set_thumbnail(url=channel.guild.icon_url)
     em.set_footer(text="CHANNEL ID: " + str(channel.id))
     await log_chat.send(embed=em)
+
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_channel_delete(channel):
@@ -635,6 +752,8 @@ async def on_guild_channel_delete(channel):
     em.set_thumbnail(url=channel.guild.icon_url)
     em.set_footer(text="CHANNEL ID: " + str(channel.id))
     await log_chat.send(embed=em)
+
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_raw_reaction_add(payload):
@@ -651,6 +770,8 @@ async def on_raw_reaction_add(payload):
     em.set_author(name=member.name + "#" + member.discriminator, icon_url=member.avatar_url)
     em.set_footer(text="MESSAGE ID: " + str(message.id))
     await log_chat.send(embed=em)
+
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_raw_reaction_remove(payload):
@@ -666,6 +787,8 @@ async def on_raw_reaction_remove(payload):
     em.set_author(name=member.name + "#" + member.discriminator, icon_url=member.avatar_url)
     em.set_footer(text="MESSAGE ID: " + str(message.id))
     await log_chat.send(embed=em)
+
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_raw_reaction_clear(payload):
@@ -676,6 +799,8 @@ async def on_raw_reaction_clear(payload):
     em.add_field(name="Message", value=f"[Click Here!]({message.jump_url})", inline=False)
     em.set_thumbnail(url=channel.guild.icon_url)
     await log_chat.send(embed=em)
+
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_raw_reaction_clear_emoji(payload):
@@ -688,6 +813,8 @@ async def on_raw_reaction_clear_emoji(payload):
     em.add_field(name="Message", value=f"[Click Here!]({message.jump_url})", inline=False)
     em.set_thumbnail(url=channel.guild.icon_url)
     await log_chat.send(embed=em)
+
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_channel_update(before, after):
@@ -732,6 +859,8 @@ async def on_guild_channel_update(before, after):
     em.set_footer(text="ROLE ID: " + str(before.id))
     if valuea != "" and valueb != "":
         await log_chat.send(embed=em)
+
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_channel_pins_update(channel, last_pin):
@@ -748,6 +877,8 @@ async def on_guild_channel_pins_update(channel, last_pin):
     em.set_thumbnail(url=channel.guild.icon_url)
     em.set_footer(text="CHANNEL ID: " + str(channel.id))
     await log_chat.send(embed=em)
+
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_update(before, after):
@@ -804,6 +935,8 @@ async def on_guild_update(before, after):
             em.add_field(name="Before", value=before.premium_subscription_count, inline=False)
             em.add_field(name="After", value=after.premium_subscription_count, inline=False)
             await log_chat.send(embed=em)
+
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_role_create(role):
@@ -812,6 +945,8 @@ async def on_guild_role_create(role):
     em.set_thumbnail(url=role.guild.icon_url)
     em.set_footer(text="ROLE ID: " + str(role.id))
     await log_chat.send(embed=em)
+
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_role_delete(role):
@@ -820,6 +955,8 @@ async def on_guild_role_delete(role):
     em.set_thumbnail(url=role.guild.icon_url)
     em.set_footer(text="ROLE ID: " + str(role.id))
     await log_chat.send(embed=em)
+
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_role_update(before, after):
@@ -1056,6 +1193,8 @@ async def on_guild_role_update(before, after):
     em.set_thumbnail(url=before.guild.icon_url)
     em.set_footer(text="ROLE ID: " + str(before.id))
     await log_chat.send(embed=em)
+
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_voice_state_update(member, before, after):
@@ -1177,6 +1316,8 @@ async def on_voice_state_update(member, before, after):
         em8.set_author(name=member, icon_url=member.avatar_url)
         em8.set_footer(text="USER ID: " + str(member.id))
         await log_chat.send(embed=em8)
+
+    await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_user_update(before, after):
@@ -1199,8 +1340,19 @@ async def on_user_update(before, after):
             em.set_thumbnail(url=before.avatar_url)
             await log_chat.send(embed=em)
 
+    await save()
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.event
+async def on_guild_join(guild):
+    bot.data['logs'] = str(guild.id)
+    bot.data['logs'][str(guild.id)] = None
+    bot.data['widt'] = str(guild.id)
+    bot.data['widt'][str(guild.id)] = None
+    bot.data['schn'] = str(guild.id)
+    bot.data['schn'][str(guild.id)] = None
 
-
+    await save()
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 

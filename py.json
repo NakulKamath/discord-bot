@@ -2,10 +2,9 @@
     "logs": {
         "818778794918936577": 819110281962979339,
         "730259581959405609": 813449755434811422,
-        "673499694965719070": 817258004629291039,
-        "742006773149597717": 742006773149597721,
-        "814816952048418817": 814816975183151104,
-        "819260628186693704": 819260628627357718
+        "673499694965719070": null,
+        "742006773149597717": null,
+        "814816952048418817": null
     },
     "trails": {
         "297280106957766658": "<a:ynot:819457802086252546>",
@@ -16,217 +15,31 @@
         "373455530192273408": "<a:_twerk:693886141706797126>"
     },
     "trailstoggle": {
-        "297280106957766658": false,
+        "297280106957766658": true,
         "561446082467463178": true,
         "791120481587691551": true,
         "730266070929244210": true,
         "706737899378311189": true,
         "373455530192273408": true
     },
-    "widts": {
-        "742006773149597717": 742234504609136660,
-        "730259581959405609": 790823925780971570
+    "widt": {
+        "818778794918936577": null,
+        "730259581959405609": null,
+        "673499694965719070": null,
+        "742006773149597717": null,
+        "814816952048418817": null
     },
     "count": {
-        "730259581959405609": {
-            "report": 1,
-            "suggest": 4
-        },
-        "818778794918936577": {
-            "report": 4,
-            "suggest": 73
-        },
-        "742006773149597717": {
-            "report": 1,
-            "suggest": 6
-        },
-        "673499694965719070": {
-            "report": 1,
-            "suggest": 3
-        },
-        "814816952048418817": {
-            "report": 1,
-            "suggest": 2
-        },
-        "819260628186693704": {
-            "report": 1,
-            "suggest": 1
-        }
+
     },
     "suggest": {
-        "818778794918936577": {
-            "1": {
-                "author": "CrafterMatrix",
-                "icon": "https://cdn.discordapp.com/avatars/297280106957766658/a_f5dab973ac3808acb6e5f767e7d9a4c4.gif?size=1024",
-                "msg": "nice"
-            },
-            "2": {
-                "author": "dazz",
-                "icon": "https://cdn.discordapp.com/avatars/791120481587691551/d0b9afd0fc06f14f5e6097f35da29623.webp?size=1024",
-                "msg": "gae"
-            },
-            "3": {
-                "author": "dazz",
-                "icon": "https://cdn.discordapp.com/avatars/791120481587691551/d0b9afd0fc06f14f5e6097f35da29623.webp?size=1024",
-                "msg": "$ping"
-            },
-            "4": {
-                "author": "dazz",
-                "icon": "https://cdn.discordapp.com/avatars/791120481587691551/d0b9afd0fc06f14f5e6097f35da29623.webp?size=1024",
-                "msg": "make ``$gae`` [user] command"
-            },
-            "5": {
-                "author": "milk",
-                "icon": "https://cdn.discordapp.com/avatars/518572082372673546/8a5d5227d8b0cc4c4259fbcf9bbb1175.webp?size=1024",
-                "msg": "bring pls rob/bankrob back"
-            },
-            "7": {
-                "author": "milk",
-                "icon": "https://cdn.discordapp.com/avatars/518572082372673546/8a5d5227d8b0cc4c4259fbcf9bbb1175.webp?size=1024",
-                "msg": "bring pls rob/bankrob back"
-            },
-            "18": {
-                "author": "milk",
-                "icon": "https://cdn.discordapp.com/avatars/518572082372673546/8a5d5227d8b0cc4c4259fbcf9bbb1175.webp?size=1024",
-                "msg": "bring pls rob/bankrob back"
-            },
-            "19": {
-                "author": "milk",
-                "icon": "https://cdn.discordapp.com/avatars/518572082372673546/8a5d5227d8b0cc4c4259fbcf9bbb1175.webp?size=1024",
-                "msg": "bring pls rob/bankrob back"
-            },
-            "20": {
-                "author": "milk",
-                "icon": "https://cdn.discordapp.com/avatars/518572082372673546/8a5d5227d8b0cc4c4259fbcf9bbb1175.webp?size=1024",
-                "msg": "bring pls rob/bankrob back"
-            },
-            "21": {
-                "author": "milk",
-                "icon": "https://cdn.discordapp.com/avatars/518572082372673546/8a5d5227d8b0cc4c4259fbcf9bbb1175.webp?size=1024",
-                "msg": "bring pls rob/bankrob back"
-            },
-            "22": {
-                "author": "milk",
-                "icon": "https://cdn.discordapp.com/avatars/518572082372673546/8a5d5227d8b0cc4c4259fbcf9bbb1175.webp?size=1024",
-                "msg": "bring pls rob/bankrob back"
-            },
-            "36": {
-                "author": "milk",
-                "icon": "https://cdn.discordapp.com/avatars/518572082372673546/8a5d5227d8b0cc4c4259fbcf9bbb1175.webp?size=1024",
-                "msg": "bring pls rob/bankrob back"
-            },
-            "37": {
-                "author": "milk",
-                "icon": "https://cdn.discordapp.com/avatars/518572082372673546/8a5d5227d8b0cc4c4259fbcf9bbb1175.webp?size=1024",
-                "msg": "bring pls rob/bankrob back"
-            },
-            "38": {
-                "author": "milk",
-                "icon": "https://cdn.discordapp.com/avatars/518572082372673546/8a5d5227d8b0cc4c4259fbcf9bbb1175.webp?size=1024",
-                "msg": "bring pls rob/bankrob back"
-            },
-            "39": {
-                "author": "milk",
-                "icon": "https://cdn.discordapp.com/avatars/518572082372673546/8a5d5227d8b0cc4c4259fbcf9bbb1175.webp?size=1024",
-                "msg": "bring pls rob/bankrob back"
-            },
-            "41": {
-                "author": "milk",
-                "icon": "https://cdn.discordapp.com/avatars/518572082372673546/8a5d5227d8b0cc4c4259fbcf9bbb1175.webp?size=1024",
-                "msg": "bring pls rob/bankrob back"
-            },
-            "43": {
-                "author": "milk",
-                "icon": "https://cdn.discordapp.com/avatars/518572082372673546/8a5d5227d8b0cc4c4259fbcf9bbb1175.webp?size=1024",
-                "msg": "bring pls rob/bankrob back"
-            },
-            "44": {
-                "author": "milk",
-                "icon": "https://cdn.discordapp.com/avatars/518572082372673546/8a5d5227d8b0cc4c4259fbcf9bbb1175.webp?size=1024",
-                "msg": "bring pls rob/bankrob back"
-            },
-            "45": {
-                "author": "milk",
-                "icon": "https://cdn.discordapp.com/avatars/518572082372673546/8a5d5227d8b0cc4c4259fbcf9bbb1175.webp?size=1024",
-                "msg": "bring pls rob/bankrob back"
-            },
-            "72": {
-                "author": "CrafterMatrix",
-                "icon": "https://cdn.discordapp.com/avatars/297280106957766658/a_f5dab973ac3808acb6e5f767e7d9a4c4.gif?size=1024",
-                "msg": "gae milk"
-            }
-        },
-        "742006773149597717": {
-            "1": {
-                "author": "CrafterMatrix",
-                "icon": "https://cdn.discordapp.com/avatars/297280106957766658/a_f5dab973ac3808acb6e5f767e7d9a4c4.gif?size=1024",
-                "msg": "niceee"
-            },
-            "2": {
-                "author": "CrafterMatrix",
-                "icon": "https://cdn.discordapp.com/avatars/297280106957766658/a_f5dab973ac3808acb6e5f767e7d9a4c4.gif?size=1024",
-                "msg": "this thing ^^"
-            },
-            "3": {
-                "author": "CrafterMatrix",
-                "icon": "https://cdn.discordapp.com/avatars/297280106957766658/a_f5dab973ac3808acb6e5f767e7d9a4c4.gif?size=1024",
-                "msg": "HEHEH"
-            },
-            "4": {
-                "author": "CrafterMatrix",
-                "icon": "https://cdn.discordapp.com/avatars/297280106957766658/a_f5dab973ac3808acb6e5f767e7d9a4c4.gif?size=1024",
-                "msg": "this FUN"
-            },
-            "5": {
-                "author": "TheAppleKeyboard",
-                "icon": "https://cdn.discordapp.com/avatars/297274375961313282/c8c2e1f743252f202413ea26d73cf46f.webp?size=1024",
-                "msg": "why you exist on my server get lost pewpie"
-            }
-        },
-        "673499694965719070": {
-            "1": {
-                "author": "CrafterMatrix",
-                "icon": "https://cdn.discordapp.com/avatars/297280106957766658/a_f5dab973ac3808acb6e5f767e7d9a4c4.gif?size=1024",
-                "msg": "nice"
-            },
-            "2": {
-                "author": "CrafterMatrix",
-                "icon": "https://cdn.discordapp.com/avatars/297280106957766658/a_f5dab973ac3808acb6e5f767e7d9a4c4.gif?size=1024",
-                "msg": "Lmdao"
-            }
-        },
-        "730259581959405609": {
-            "1": {
-                "author": "CrafterMatrix",
-                "icon": "https://cdn.discordapp.com/avatars/297280106957766658/a_f5dab973ac3808acb6e5f767e7d9a4c4.gif?size=1024",
-                "msg": "nice"
-            },
-            "2": {
-                "author": "_.lucifer",
-                "icon": "https://cdn.discordapp.com/avatars/724283869137862666/fdaaa4040dbff862f1636067af407593.webp?size=1024",
-                "msg": "make a separate channel for ansh and likhi"
-            },
-            "3": {
-                "author": "azstar_619",
-                "icon": "https://cdn.discordapp.com/avatars/711810384834723890/c5d93c76d99af3500967dc9b0a3163e4.webp?size=1024",
-                "msg": "make a separate channel for ankit and all his 5ex girl friends"
-            }
-        },
-        "814816952048418817": {
-            "1": {
-                "author": "CrafterMatrix",
-                "icon": "https://cdn.discordapp.com/avatars/297280106957766658/a_f5dab973ac3808acb6e5f767e7d9a4c4.gif?size=1024",
-                "msg": "nice"
-            }
-        },
-        "819260628186693704": {}
+
     },
     "schn": {
-        "742006773149597717": 818735989181906945,
-        "730259581959405609": 819223413729525780,
-        "818778794918936577": 819109218165981224,
-        "673499694965719070": 819225424675995648,
-        "814816952048418817": 817315802155057186,
-        "819260628186693704": 819260628627357718
+        "818778794918936577": null,
+        "730259581959405609": null,
+        "742006773149597717": null,
+        "673499694965719070": null,
+        "814816952048418817": null
     }
 }
