@@ -1,35 +1,271 @@
 import discord
 from discord.ext import commands
 import re
+import asyncio
+import json
+from datetime import datetime, timedelta
 
-client = commands.Bot(command_prefix="$", intents=discord.Intents.all(), case_insensitive=True)
+bot = commands.Bot(command_prefix="$", intents=discord.Intents.all(), case_insensitive=True)
 
-reaction_title = ""
-description = ""
-reactions = {}
-reaction_message_id = ""
-log = "814816975183151104"
+with open(r"C:\Users\nakul\Documents\GitHub\mybot\py.json", 'r') as f:
+    bot.data = json.load(f)
+
+async def save():
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        with open(r"C:\Users\nakul\Documents\GitHub\mybot\py.json", 'w') as f:
+            json.dump(bot.data, f, indent=4)
+
+        await asyncio.sleep(1)
+
+bot.admin_roles = ["staff", "Mods"]
+bot.server_developer_role = "Server Developers"
+bot.TICK_MARK = "<:tick_mark:814801884358901770>"
+bot.CROSS_MARK = "<:cross_mark:814801897138815026>"
 ban_reason = ""
 kicks = False
+
+# on message event handler - handles a lot of the anti blocking, logging. - Even Recieves all messages,
+# including DMs and from itself
+@bot.event
+async def on_message(msg):
+
+    # ignore it if its the bots own message
+    if msg.author.id == bot.user.id:
+        return
+
+    log_save_id = bot.data['logs'][msg.guild.id]
+    if not isinstance(msg.channel, discord.channel.DMChannel):
+        if msg.guild.id == log_save_id:
+            return
+
+    # get main log channel
+    try:
+        chn = bot.data['logs'][msg.guild.id]
+    except AttributeError:
+        # It is a DM channel message - It has no guild
+        pass
+
+    # TICKET LOGGER
+    try:
+        # get all currently open tickets
+        curr_open_tickets = bot.tickets_collection.find({"GUILD_ID": msg.guild.id, "STATUS": "OPEN"})
+        # get the channel ids of those tickets
+        currtickids = [i["CHN_ID"] for i in curr_open_tickets]
+
+        # check if the channel id of the message was in this list
+        if msg.channel.id in currtickids:
+            # log the message with details into mongodb
+            d = {"time": msg.created_at, "authorid": msg.author.id,
+                 "authorname": f'{msg.author.name}#{msg.author.discriminator}', 'content': msg.content}
+            if msg.attachments:
+                d["attachments"] = True
+            else:
+                d["attachments"] = False
+
+            bot.tickets_collection.update_one({"GUILD_ID": msg.guild.id, "CHN_ID": msg.channel.id},
+                                              {"$addToSet": {"CHAT_LOG": d}})
+    except AttributeError:
+        # DM channel - it has no guild attribute.
+        pass
+
+    # ATTACHMENT LOGGER
+    if msg.attachments and not isinstance(msg.channel, discord.channel.DMChannel):  # only log non DMs
+        if msg.channel.id != chn.id and msg.channel.id != log_save_id:  # If the message is not in log channel - done to prevent infinite loop
+
+            # get date time of message creation
+            t = datetime.strftime(msg.created_at + timedelta(hours=5, minutes=30),
+                                  '%d/%m/%Y, %H:%M:%S hrs IST/GMT+5:30')
+
+            # send a new log message for each attachment in the msg
+            for i in msg.attachments:
+                # usually len 1, just in case...
+
+                # generate message
+                em = discord.Embed(description=f"**Attachment sent in {str(msg.channel.mention)}** - [Message]({msg.jump_url})", color=discord.Color.blue())
+                em.add_field(name='Author', value=msg.author, inline=False)
+                em.add_field(name='Message', value=msg.content)
+                em.add_field(name='Channel', value=msg.channel)
+                em.add_field(name='Server', value=msg.guild)
+                em.add_field(name='Link', value=i.url, inline=False)
+                await chn.send(embed=em)
+
+                msge = f"**ORACLE ATTACHMENT LOGGING**\n" + \
+                      f"FROM: {msg.author.name}#{msg.author.discriminator} " \
+                      f"[{msg.author.id}]\n" + \
+                      f"Created IST Timestamp: {t}\n"
+                msge += f"Not a DM channel (I do not log DM Channels for Privacy),\nID: {msg.channel.id}" \
+                        f"\nNAME: {msg.channel.name}" \
+                        f"\nON SERVER: {msg.guild.name}"
+                msge += f"\nMessage was:\n```{msg.content}```\n"
+
+                if i.size < 8000000:  # 8 MB in bytes
+                    # can send attachment
+                    fi = await i.to_file()
+                    lgsvchannel = bot.get_channel(log_save_id)
+                    await lgsvchannel.send(msge, file=fi)
+                    await chn.send(msge, file=fi)
+                else:
+                    # cant send attachment, too large!
+                    await chn.send(msge+"\n**Couldn't Log attachment - Too large (Larger than 8000000 Bytes)**\n")
+
+    # INVITE BLOCKER
+    if msg.content.find("discord.gg") != -1 and not isinstance(msg.channel, discord.channel.DMChannel):
+        # if message has discord.gg type invite
+        ind = msg.content.find("discord.gg")
+        if msg.content[ind + len("discord.gg"):] == "/jDMYEV5":
+            # if the message is an invite for The Matrix, ignore it.
+            pass
+        else:
+            # Delete the message since invite has been found
+            em = discord.Embed(description=f"{bot.CROSS_MARK}  You can not send invite links!")
+            await msg.channel.send(embed=em) 
+            await chn.send(f"{msg.author.mention} | {msg.author.id} did a invite in {msg.channel}.")
+            await msg.delete()
+            return
+    elif msg.content.find("discordapp.com/invite") != -1 and not isinstance(msg.channel, discord.channel.DMChannel):
+        # if message has discordapp.com/invite type invite
+        ind = msg.content.find("discordapp.com/invite")
+        if msg.content[ind + len("discordapp.com/invite"):] == "/jDMYEV5":
+            # if the message is an invite for The Matrix, ignore it.
+            pass
+        else:
+            # Delete the message since invite has been found
+            em = discord.Embed(description=f"{bot.CROSS_MARK}  You can not send invite links!")
+            await msg.channel.send(embed=em) 
+            await chn.send(f"{msg.author.mention} | {msg.author.id} did a invite in {msg.channel}.")
+            await msg.delete()
+            return
+    elif msg.content.find("discord.com/invite") != -1 and not isinstance(msg.channel, discord.channel.DMChannel):
+        # if message has discord.com/invite type invite
+        ind = msg.content.find("discord.com/invite")
+        if msg.content[ind + len("discord.com/invite"):] == "/jDMYEV5":
+            # if the message is an invite for The Matrix, ignore it.
+            pass
+        else:
+            # Delete the message since invite has been found
+            em = discord.Embed(description=f"{bot.CROSS_MARK}  You can not send invite links!")
+            await msg.channel.send(embed=em) 
+            await chn.send(f"{msg.author.mention} | {msg.author.id} did a invite in {msg.channel}.")
+            await msg.delete()
+            return
+
+    # return prefix if bot is tagged (tag must be first in the msg)
+    if msg.content.startswith(f"<@!{bot.user.id}>"):
+        await msg.channel.send(f"Hey there, my prefix is {bot.command_prefix}")
+
+    # NOTE: OVERRANCID REQUESTED SPECIAL HANDLER
+    if msg.author.id == 703345862155436084:  # This is Rancid's ID.
+        await msg.add_reaction("<:overrancid:816011667230031952>")
+
+    # NOTE: Crafter special handler
+    if msg.author.id == 297280106957766658:  # This is Crafter's ID.
+        await msg.add_reaction("<:crafterblush:816011666680315926>")
+
+    # process the message normally (as in command)
+    await bot.process_commands(msg)
+
+
+# The edit event - all message edits are detected here
+@bot.event
+async def on_message_edit(before, after):
+
+    try:
+        chn = bot.get_channel(bot.common_server_info_collection.find_one({"SERVER_ID": after.guild.id})["LOG_CHANNEL"])
+    except AttributeError:
+        # DM channel - there is none guild attribute for Message
+        pass
+
+    # Invite block for edits
+    if after.content.find("discord.gg") != -1 and not isinstance(after.channel, discord.channel.DMChannel):
+        # found discord.gg!
+        ind = after.content.find("discord.gg")
+        if after.content[ind + len("discord.gg"):] \
+                == "/jDMYEV5":
+            pass
+        else:
+            # found discord.gg!
+            em = discord.Embed(description=f"{bot.CROSS_MARK}  You can not send invite links!")
+
+            await after.channel.send(embed=em)
+            await chn.send(f"{after.author.mention} | {after.author.id} did a EDIT invite in {after.channel}.")
+            await after.delete()
+    elif after.content.find("discordapp.com/invite") != -1 and not isinstance(after.channel, discord.channel.DMChannel):
+        # found "discordapp.com/invite"
+        ind = after.content.find("discordapp.com/invite")
+        if after.content[ind + len("discordapp.com/invite"):] == "/jDMYEV5":
+            pass
+        else:
+            # found discord.gg!
+            em = discord.Embed(description=f"{bot.CROSS_MARK}  You can not send invite links!")
+            await after.channel.send(embed=em)    
+            await chn.send(f"{after.author.mention} | {after.author.id} did a EDIT invite in {after.channel}.")
+            await after.delete()
+    elif after.content.find("discord.com/invite") != -1 and not isinstance(after.channel, discord.channel.DMChannel):
+        # found "discord.com/invite"
+        ind = after.content.find("discord.com/invite")
+        if after.content[ind + len("discord.com/invite"):] == "/jDMYEV5":
+            pass
+        else:
+            # found discord.gg!
+            em = discord.Embed(description=f"{bot.CROSS_MARK}  You can not send invite links!")
+            await after.channel.send(embed=em) 
+            await chn.send(f"{after.author.mention} | {after.author.id} did a EDIT invite in {after.channel}.")
+            await after.delete()
+
+
+# Master command ERROR HANDLER!
+@bot.event
+async def on_command_error(ctx, error):
+    # ignore command not found errors
+    ignored = commands.CommandNotFound
+    if isinstance(error, ignored):
+        return
+
+    # handle Cooldown's
+    if isinstance(error, commands.CommandOnCooldown):
+        m, s = divmod(error.retry_after, 60)
+        h, m = divmod(m, 60)
+        if int(h) == 0 and int(m) == 0:
+            await ctx.send(f'You must wait {int(s)} second(s) to use this command')
+        elif int(h) == 0 and int(m) != 0:
+            await ctx.send(f'You must wait {int(m)} minute(s) and {int(s)} second(s) to use this command')
+        else:
+            await ctx.send(
+                f'You must wait {int(h)} hour(s), {int(m)} minute(s) and {int(s)} second(s) to use this command')
+        return
+    # Handle wrong user input - missing arguments etc.
+    elif isinstance(error, commands.UserInputError):
+        await ctx.send(f'Please use the command properly:\n```{error}```')
+        return
+    # Handle permission issues (check failures)
+    elif isinstance(error, commands.CheckFailure):
+        em = discord.Embed(description=f"{bot.CROSS_MARK}  You lack the required permissions!")
+        await ctx.send(embed=em)
+        return
+    # handle unhandled errors - just raise it and send to discord.
+    else:
+        await ctx.send(f"Internal Error!\n```{error}```\nPlease inform the moderators immediately.")
+        raise error
+
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.command(name="whoami")
+@bot.command(name="whoami")
 async def whoami(context):
     channel = context.message.channel
     author = context.message.author
     await channel.send("Hi, you are " + str(author.mention) + " and you are talking to **The Oracle** a bot made for **The Matrix**!! You are currently in the channel : " + str(channel.mention))
     await context.message.author.send("You can not let the other members on the server know about this... Its top secret stuff - you are an amazing person!! : )")
-
-@client.command(name="ONION")
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.command(name="ONION")
 async def onion(context):
     await context.send("https://cdn.discordapp.com/attachments/774156001993162793/814833307836481576/images.png")
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.command(name="kick", pass_context = True)
+@bot.command(name="kick", pass_context = True)
 async def kick(context, member: discord.Member, *, reason=None):
-    global log
     global kicks
     kicks = True
     for_reason = "For reason - "
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(context.guild.id)])
     if reason == None:
         reason = "No reason provided! by moderator " + str(context.message.author)
     if reason != "No reason provided! by moderator " + str(context.message.author):
@@ -50,7 +286,7 @@ async def kick(context, member: discord.Member, *, reason=None):
         em = discord.Embed(description=f"<:cross_mark:814801897138815026> You cannot kick yourself!")
         await context.send(embed=em)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.command(name="ban", pass_context = True)
+@bot.command(name="ban", pass_context = True)
 @commands.has_permissions(ban_members=True)
 async def ban(context, member: discord.User, *, reason=None):
     global ban_reason
@@ -70,7 +306,7 @@ async def ban(context, member: discord.User, *, reason=None):
         em = discord.Embed(description=f"<:cross_mark:814801897138815026> You cannot ban yourself!")
         await context.send(embed=em)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.command(aliases=['ui', 'info', 'i'])
+@bot.command(aliases=['ui', 'info', 'i'])
 async def userinfo(context, *, user: discord.Member = None):
     if isinstance(context.channel, discord.DMChannel):
         return    
@@ -95,7 +331,7 @@ async def userinfo(context, *, user: discord.Member = None):
     em.set_footer(text='USER ID: ' + str(user.id))
     return await context.send(embed=em)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.command(aliases=['si', 'gi', 'guildinfo'])
+@bot.command(aliases=['si', 'gi', 'guildinfo'])
 async def serverinfo(context):
     name = str(context.guild.name)
     owner = str(context.guild.owner)
@@ -121,7 +357,7 @@ async def serverinfo(context):
     em.set_footer(text="Server ID : " + id)
     await context.send(embed=em)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.command(aliases=["ci", "channeli", "cinfo"])
+@bot.command(aliases=["ci", "channeli", "cinfo"])
 async def channelinfo(context, *, channel: discord.TextChannel=None):
     date_format = "%a, %d %b %Y %I:%M %p"
     roles = ""
@@ -145,7 +381,7 @@ async def channelinfo(context, *, channel: discord.TextChannel=None):
     em.set_thumbnail(url=context.guild.icon_url)
     await context.send(embed=em)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.command(aliases=["ri", "rolei", "rinfo"])
+@bot.command(aliases=["ri", "rolei", "rinfo"])
 async def roleinfo(context, *, role: discord.Role=None):
     tagss = role.tags
     date_format = "%a, %d %b %Y %I:%M %p"
@@ -164,7 +400,7 @@ async def roleinfo(context, *, role: discord.Role=None):
         em.set_thumbnail(url=context.guild.icon_url)
     await context.send(embed=em)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.command()
+@bot.command()
 async def purge(context, limit=5, member: discord.Member=None):
     await context.message.delete()
     msg = []
@@ -183,7 +419,7 @@ async def purge(context, limit=5, member: discord.Member=None):
     await context.channel.delete_messages(msg)
     await context.send(f"Purged {limit} messages of {member.mention}", delete_after=3)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.command(aliases=["a", "av"])
+@bot.command(aliases=["a", "av"])
 async def avatar(context, member: discord.Member=None):
     if member == None:
         member = context.message.author 
@@ -193,7 +429,7 @@ async def avatar(context, member: discord.Member=None):
     em.set_footer(text="USER ID: " + str(member.id))
     await context.channel.send(embed=em)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.command(aliases=["servericon"])
+@bot.command(aliases=["servericon"])
 async def icon(context):
     em = discord.Embed(title="Icon", color=discord.Color.blue())
     em.set_image(url=context.guild.icon_url)
@@ -201,7 +437,7 @@ async def icon(context):
     em.set_footer(text="SERVER ID: " + str(context.guild.id))
     await context.channel.send(embed=em)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.command(aliases=["serverbanner"])
+@bot.command(aliases=["serverbanner"])
 async def banner(context):
     em = discord.Embed(title="Banner", color=discord.Color.blue())
     em.set_image(url=context.guild.banner_url)
@@ -209,7 +445,7 @@ async def banner(context):
     em.set_footer(text="SERVER ID: " + str(context.guild.id))
     await context.channel.send(embed=em)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.command(aliases=["owo"])
+@bot.command(aliases=["owo"])
 async def owofy(context, message: discord.Message=None):
     if message == None:
         em = discord.Embed(description=f"<:cross_mark:814801897138815026> You must provide text!")
@@ -230,18 +466,15 @@ async def owofy(context, message: discord.Message=None):
     await context.channel.send(msg)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_ready():
-    gen_chat = client.get_channel(int(log))
-    await gen_chat.send("ARB is online (don't $banall MORF)")
-    await client.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game("with the lives of RAIDERS"))
+    await bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game("with the lives of RAIDERS"))
     print('Bot is now online!')
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_member_ban(guild, user):
     global ban_reason
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(guild.id)])
     em = discord.Embed(description=f"**Member banned**\n {user.mention}", color=discord.Color.red())
     if ban_reason != "":
         em.add_field(name="Reason", value=str(ban_reason))
@@ -249,20 +482,19 @@ async def on_member_ban(guild, user):
     em.set_thumbnail(url=user.avatar_url)
     await log_chat.send(embed=em)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_raw_message_edit(payload):  
     before = payload.cached_message
-    channel = client.get_channel(payload.channel_id)
+    channel = bot.get_channel(payload.channel_id)
     after = await channel.fetch_message(payload.message_id)
+    log_chat = bot.get_channel(bot.data['logs'][str(after.guild.id)])
     if len(before.content) > 1024:
         before.content = before.content[0:1020] + "\n..."
     if len(after.content) > 1024:
         after.content = before.content[0:1020] + "\n..."
-    global log
     if str(after.content) == "":
         return
-    log_chat = client.get_channel(int(log))
-    if after.author == client.user:
+    if after.author == bot.user:
         return
     if before == None:
         before = "Uncashed message : ("
@@ -273,11 +505,10 @@ async def on_raw_message_edit(payload):
     em.set_footer(text="MESSAGE ID: " + str(after.id))
     await log_chat.send(embed=em)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_raw_message_delete(payload):
     message = payload.cached_message
-    global log
-    log_chat = client.get_channel(int(log))  
+    log_chat = bot.get_channel(bot.data['logs'][str(message.guild.id)])  
     if str(message.content) == "":
         return
     channel = message.channel
@@ -286,21 +517,19 @@ async def on_raw_message_delete(payload):
     em.set_footer(text="MESSAGE ID: " + str(message.id))
     await log_chat.send(embed=em)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_raw_bulk_message_delete(payload):
+    log_chat = bot.get_channel(bot.data['logs'][str(payload.guild_id)])
     messages = payload.cached_messages
     message_contents = "\n".join([str(message.author.mention)+" : "+message.content for message in messages])
-    global log
-    log_chat = client.get_channel(int(log))
-    channel = client.get_channel(int(payload.channel_id))
+    channel = bot.get_channel(int(payload.channel_id))
     em = discord.Embed(description=f"**Bulk message delete in {str(channel.mention)}** \n {str(message_contents)}", color=discord.Color.red())
     em.set_footer(text="CHANNEL ID: " + str(channel.id))
     await log_chat.send(embed=em)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_member_join(member):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(member.guild.id)])
     date_format = "%a, %d %b %Y %I:%M %p"
     em = discord.Embed(description= f"**Member Joined** - {member.mention}", color=discord.Color.green())
     em.set_author(name=str(member), icon_url=member.avatar_url)
@@ -311,15 +540,14 @@ async def on_member_join(member):
     em.set_footer(text="USER ID: " + str(member.id))
     await log_chat.send(embed=em)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_member_remove(member):
+    log_chat = bot.get_channel(bot.data['logs'][str(member.guild.id)])
     global kicks
     if kicks == True:
         kicks = False
         return
     else:
-        global log
-        log_chat = client.get_channel(int(log))
         date_format = "%a, %d %b %Y %I:%M %p"
         em = discord.Embed(description= f"**Member Left** - {member.mention}", color=discord.Color.red())
         em.set_author(name=str(member), icon_url=member.avatar_url)
@@ -331,10 +559,9 @@ async def on_member_remove(member):
         em.set_footer(text="USER ID: " + str(member.id))
         await log_chat.send(embed=em)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_member_update(before, after):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(after.guild.id)])
     if before.roles != after.roles:
         for role in before.roles:
             if role not in after.roles:
@@ -378,10 +605,9 @@ async def on_member_update(before, after):
                 em.set_footer(text="USER ID: " + str(after.id)) 
         await log_chat.send(embed=em)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_invite_create(invite):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(invite.guild.id)])
     em = discord.Embed(title= "New invite created", color=discord.Color.green())
     em.add_field(name="Invite", value=str(invite), inline=False)
     em.add_field(name="Creater", value=str(invite.inviter.mention), inline=True)
@@ -390,10 +616,9 @@ async def on_invite_create(invite):
     em.set_footer(text="USER ID: " + str(invite.inviter.id))
     await log_chat.send(embed=em)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_invite_delete(invite):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(invite.guild.id)])
     em = discord.Embed(title= "Old invite revoked", color=discord.Color.red())
     em.add_field(name="Invite", value=str(invite), inline=False)
     em.add_field(name="Channel", value=str(invite.channel), inline=True)
@@ -401,33 +626,30 @@ async def on_invite_delete(invite):
     await log_chat.send(embed=em)
 
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_guild_channel_create(channel):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(channel.guild.id)])
     em = discord.Embed(title=f"Channel Created - #{channel}", color=discord.Color.green())
     em.add_field(name="Catrgory", value=f"`{channel.category}`")
     em.set_thumbnail(url=channel.guild.icon_url)
     em.set_footer(text="CHANNEL ID: " + str(channel.id))
     await log_chat.send(embed=em)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_guild_channel_delete(channel):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(channel.guild.id)])
     em = discord.Embed(title=f"Channel Deleted - #{channel}", color=discord.Color.red())
     em.add_field(name="Catrgory", value=f"`{channel.category}`")
     em.set_thumbnail(url=channel.guild.icon_url)
     em.set_footer(text="CHANNEL ID: " + str(channel.id))
     await log_chat.send(embed=em)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_raw_reaction_add(payload):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(payload.guild_id)])
     emoji = payload.emoji
     member = payload.member
-    channel = client.get_channel(payload.channel_id)
+    channel = bot.get_channel(payload.channel_id)
     message = await channel.fetch_message(payload.message_id)
     if member.id == 741296603733950494:
         return
@@ -438,14 +660,13 @@ async def on_raw_reaction_add(payload):
     em.set_footer(text="MESSAGE ID: " + str(message.id))
     await log_chat.send(embed=em)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_raw_reaction_remove(payload):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(payload.guild_id)])
     emoji = payload.emoji
     user = payload.user_id
-    member = client.get_user(user)
-    channel = client.get_channel(payload.channel_id)
+    member = bot.get_user(user)
+    channel = bot.get_channel(payload.channel_id)
     message = await channel.fetch_message(payload.message_id)
     em = discord.Embed(description=f"**Reaction removed in {channel.mention}** - [Message]({message.jump_url})", color=discord.Color.red())
     em.add_field(name="Emoji", value=f"{str(emoji)}", inline=False)
@@ -454,23 +675,21 @@ async def on_raw_reaction_remove(payload):
     em.set_footer(text="MESSAGE ID: " + str(message.id))
     await log_chat.send(embed=em)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_raw_reaction_clear(payload):
-    global log
-    log_chat = client.get_channel(int(log))
-    channel = client.get_channel(payload.channel_id)
+    log_chat = bot.get_channel(bot.data['logs'][str(payload.guild_id)])
+    channel = bot.get_channel(payload.channel_id)
     message = await channel.fetch_message(payload.message_id)
     em = discord.Embed(title=f"Reactions Cleared", color=discord.Color.red())
     em.add_field(name="Message", value=f"[Click Here!]({message.jump_url})", inline=False)
     em.set_thumbnail(url=channel.guild.icon_url)
     await log_chat.send(embed=em)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_raw_reaction_clear_emoji(payload):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(payload.guild_id)])
     emoji = payload.emoji
-    channel = client.get_channel(payload.channel_id)
+    channel = bot.get_channel(payload.channel_id)
     message = await channel.fetch_message(payload.message_id)
     em = discord.Embed(title=f"Emoji Cleared", color=discord.Color.red())
     em.add_field(name="Emoji", value=f"{str(emoji)}", inline=False)
@@ -478,10 +697,9 @@ async def on_raw_reaction_clear_emoji(payload):
     em.set_thumbnail(url=channel.guild.icon_url)
     await log_chat.send(embed=em)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_guild_channel_update(before, after):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(after.guild.id)])
     valueb = ""
     valuea = ""
     em = discord.Embed(title=f'Channel "{before.name}" Updated', color=discord.Color.blue())
@@ -522,10 +740,9 @@ async def on_guild_channel_update(before, after):
     em.set_footer(text="ROLE ID: " + str(before.id))
     await log_chat.send(embed=em)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_guild_channel_pins_update(channel, last_pin):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(channel.guild.id)])
     status = "Pins Updated"
     pins = await channel.pins()
     pin = "\n".join(["[Click Here!](" + pin.jump_url + ")" for pin in pins])
@@ -539,10 +756,9 @@ async def on_guild_channel_pins_update(channel, last_pin):
     em.set_footer(text="CHANNEL ID: " + str(channel.id))
     await log_chat.send(embed=em)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_guild_update(before, after):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(after.guild.id)])
     if before.banner != after.banner:
         emold = discord.Embed(title=f"{after.name}'s' Banner Changed", description="Before", color=discord.Color.blue())
         emold.set_image(url=before.banner_url)
@@ -596,28 +812,25 @@ async def on_guild_update(before, after):
             em.add_field(name="After", value=after.premium_subscription_count, inline=False)
             await log_chat.send(embed=em)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_guild_role_create(role):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(role.guild.id)])
     em = discord.Embed(title=f'Role "{role.name}" Created', color=discord.Color.green())
     em.set_thumbnail(url=role.guild.icon_url)
     em.set_footer(text="ROLE ID: " + str(role.id))
     await log_chat.send(embed=em)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_guild_role_delete(role):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(role.guild.id)])
     em = discord.Embed(title=f'Role "{role.name}" Deleted', color=discord.Color.red())
     em.set_thumbnail(url=role.guild.icon_url)
     em.set_footer(text="ROLE ID: " + str(role.id))
     await log_chat.send(embed=em)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_guild_role_update(before, after):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(after.guild.id)])
     valueb = ""
     valuea = ""
     permissions = ""
@@ -711,10 +924,9 @@ async def on_guild_role_update(before, after):
     em.set_footer(text="ROLE ID: " + str(before.id))
     await log_chat.send(embed=em)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_voice_state_update(member, before, after):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(member.guild.id)])
     status = ""
     status2 = ""
     status3 = ""
@@ -833,10 +1045,9 @@ async def on_voice_state_update(member, before, after):
         em8.set_footer(text="USER ID: " + str(member.id))
         await log_chat.send(embed=em8)
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@client.event
+@bot.event
 async def on_user_update(before, after):
-    global log
-    log_chat = client.get_channel(int(log))
+    log_chat = bot.get_channel(bot.data['logs'][str(after.guild.id)])
     if before.avatar != after.avatar:
         emold = discord.Embed(title=f"{before.display_name}'s Avatar Updated", description="Before", color=discord.Color.blue())
         emold.set_image(url=before.avatar_url)
@@ -864,4 +1075,4 @@ async def on_user_update(before, after):
 
 
 
-client.run('ODExMjQzMjQwODM2ODI1MDk5.YCvXJA.koWM9mPBTB5iwhKmCwPS1KHu0H0')
+bot.run('ODExMjQzMjQwODM2ODI1MDk5.YCvXJA.koWM9mPBTB5iwhKmCwPS1KHu0H0')
