@@ -41,7 +41,7 @@ async def ticketoption(context, param=None, emoji=None, *, op=None):
             em = discord.Embed(description=f"{bot.CROSS_MARK} You must provide an emoji/option!\n Usage- `$ticketoption add (emoji) (option line)`")
             await context.send(embed=em)
             return
-        bot.data['ticket']['op'][str(context.guild.id)][f"{emoji}"] = str(op)
+        bot.data['ticket']['op'][str(context.guild.id)][str(emoji)] = str(op)
         em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully added Emoji-Option pair to ticketing!\n {str(emoji)} - {op}")
         mes = await context.send(embed=em)
         await asyncio.sleep(5)
@@ -1029,28 +1029,47 @@ async def on_raw_reaction_add(payload):
     em.set_author(name=member.name + "#" + member.discriminator, icon_url=member.avatar_url)
     em.set_footer(text="MESSAGE ID: " + str(message.id))
     await log_chat.send(embed=em)
+    topic = ''
     if message.id == bot.data['ticket']['msg'][str(guild.id)]:
+        mesbool = True
+        emojis = ''
         options = ""
         for emoji, op in bot.data['ticket']['op'][str(guild.id)].items():
             options += str(emoji) + " - " + op + "\n"
-        em = discord.Embed(title='Select the type of issue!', description=f"{options}")
-        mes = await channel.send()
-        def check(reaction, user):
-            return reaction.message.id == mes.id and str(emoji) in ["<:The_Oracle:789821139928350740>", bot.CROSS_MARK, "<:minecraft:812967995752185858>", "🔨", "📜", "⚙️"] and user.id == member.id
-        try:
-            r, u = await bot.wait_for('reaction_add', check=check, timeout=30)
-        except asyncio.TimeoutError:
-            em = discord.Embed(description=f"{bot.CROSS_MARK}  You took too long to respond! Cancelling process!")
-            mem = await channel.send(embed=em)
-            return
+        if options != '':
+            em = discord.Embed(title='Select the type of issue!', description=f"{options}")
+            mes = await channel.send(embed=em)
+            for emoji in bot.data['ticket']['op'][str(guild.id)].values():
+                await mes.add_reaction(str(emoji))
+                emojis += str(emoji) + ', ' 
+            await mes.add_reaction(bot.CROSS_MARK)
+            emojis += bot.CROSS_MARK
+            def check(reaction, user):
+                return reaction.message.id == mes.id and str(emoji) in [emojis] and user.id == member.id
+            try:
+                reaction, user = await bot.wait_for('reaction_add', check=check, timeout=30)
+            except asyncio.TimeoutError:
+                em = discord.Embed(description=f"{bot.CROSS_MARK}  You took too long to respond! Cancelling process!")
+                mem = await channel.send(embed=em)
+                await asyncio.sleep(5)
+                await mem.delete()
+                return
+            user = user
+            if str(reaction.emoji) in bot.data['ticket']['op'][str(guild.id)]:
+                topic = bot.data['ticket']['op'][str(guild.id)][str(reaction.emoji)]
         overwrites = {
         guild.default_role: discord.PermissionOverwrite(read_messages=False),
         member: discord.PermissionOverwrite(read_messages=True)}
         chn = await guild.create_text_channel(f"#{bot.data['ticket']['count'][str(guild.id)]}-{member.name}", overwrites=overwrites)
-        em = discord.Embed(title=f"Ticket #{bot.data['ticket']['count'][str(guild.id)]}", description=f"Created by {member.mention}")
+        em = discord.Embed(title=f"Ticket #{bot.data['ticket']['count'][str(guild.id)]}")
+        em.add_field(name='Creator', value=member.mention)
+        if topic != '':
+            em.add_field(name='Topic', value=topic)
         await chn.send(embed=em)
         await message.remove_reaction(emoji, member)
         bot.data['ticket']['count'][str(guild.id)] = bot.data['ticket']['count'][str(guild.id)] + 1
+        if mesbool == True:
+            await mes.delete()
 
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
