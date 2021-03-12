@@ -29,6 +29,22 @@ kicks = False
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command()
 async def suggest(context, *, msg=None):
     chn = bot.get_channel(bot.data['suggest']['chn'][str(context.guild.id)])
@@ -229,7 +245,6 @@ async def sets(context, channel: discord.TextChannel=None):
         await context.message.delete()
         await mes.delete()
 
-
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command(aliases=['setticket'])
@@ -239,13 +254,17 @@ async def sett(context, channel: discord.TextChannel=None):
         em = discord.Embed(description=f"{bot.CROSS_MARK} You must provide a channel for this command!")
         await context.send(embed=em)
     else:
-        bot.data['schn'][str(context.guild.id)] = channel.id
+        bot.data['ticket']['chn'][str(context.guild.id)] = channel.id
         em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully set ticket channel as - {channel.mention}!")
         mes = await context.send(embed=em)
+        em = discord.Embed(title="Create ticket!", description="React 📩 to create a ticket!")
+        msg = await channel.send(embed=em)
+        await msg.add_reaction('📩')
+        await channel.set_permissions(context.guild.default_role, send_messages = False, read_messages = True)
+        bot.data['ticket']['msg'][str(context.guild.id)] = msg.id
         await asyncio.sleep(5)
         await context.message.delete()
         await mes.delete()
-
 
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -298,6 +317,7 @@ async def resett(context):
     if msg.content.upper() == 'YES':
         bot.data['ticket']['count'][str(context.guild.id)] = 1
         bot.data['ticket']['val'][str(context.guild.id)] = {}
+        bot.data['ticket']['msg'][str(context.guild.id)] = ""
         em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully reset ticket count!")
         mes = await context.send(embed=em)
         await context.message.delete()
@@ -992,8 +1012,9 @@ async def on_raw_reaction_add(payload):
     emoji = payload.emoji
     member = payload.member
     channel = bot.get_channel(payload.channel_id)
+    guild = channel.guild
     message = await channel.fetch_message(payload.message_id)
-    if member.id == 741296603733950494:
+    if member.id == 811243240836825099:
         return
     em = discord.Embed(description=f"**‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎Reaction added in {channel.mention}** - [Message]({message.jump_url})   ", color=discord.Color.green())
     em.add_field(name="Emoji", value=f"{str(emoji)}", inline=False)
@@ -1001,6 +1022,15 @@ async def on_raw_reaction_add(payload):
     em.set_author(name=member.name + "#" + member.discriminator, icon_url=member.avatar_url)
     em.set_footer(text="MESSAGE ID: " + str(message.id))
     await log_chat.send(embed=em)
+    if message.id == bot.data['ticket']['msg'][str(guild.id)]:
+        overwrites = {
+        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+        member: discord.PermissionOverwrite(read_messages=True)}
+        chn = await guild.create_text_channel(f"#{bot.data['ticket']['count'][str(guild.id)]}-{member.name}", overwrites=overwrites)
+        em = discord.Embed(title=f"Ticket #{bot.data['ticket']['count'][str(guild.id)]}", description=f"Created by {member.mention}")
+        await chn.send(embed=em)
+        await message.remove_reaction(emoji, member)
+        bot.data['ticket']['count'][str(guild.id)] = bot.data['ticket']['count'][str(guild.id)] + 1
 
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
