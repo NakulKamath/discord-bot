@@ -279,7 +279,7 @@ async def sett(context, channel: discord.TextChannel=None):
 @commands.has_permissions(manage_messages=True)
 async def resets(context):
     em = discord.Embed(description=f"{bot.CROSS_MARK} Are you sure you want to reset the suggestion count?\n Type yes to proceed!")
-    await context.send(embed=em)
+    msgg = await context.send(embed=em)
     def check(m):
         return m.author == context.message.author and m.channel == context.channel
     try:
@@ -297,6 +297,7 @@ async def resets(context):
         await msg.delete()
         await asyncio.sleep(5)
         await mes.delete()
+        await msgg.delete()
     else:
         em = discord.Embed(description=f"{bot.CROSS_MARK} Process cancelled!")
         mes = await context.channel.send(embed=em)
@@ -304,6 +305,7 @@ async def resets(context):
         await msg.delete()
         await asyncio.sleep(5)
         await mes.delete()
+        await msgg.delete()
         return
 
     await save()
@@ -312,7 +314,7 @@ async def resets(context):
 @commands.has_permissions(manage_messages=True)
 async def resett(context):
     em = discord.Embed(description=f"{bot.CROSS_MARK} Are you sure you want to reset the ticket count?\n Type yes to proceed!")
-    await context.send(embed=em)
+    msgg = await context.send(embed=em)
     def check(m):
         return m.author == context.message.author and m.channel == context.channel
     try:
@@ -332,6 +334,7 @@ async def resett(context):
         await msg.delete()
         await asyncio.sleep(5)
         await mes.delete()
+        await msgg.delete()
     else:
         em = discord.Embed(description=f"{bot.CROSS_MARK} Process cancelled!")
         mes = await context.channel.send(embed=em)
@@ -339,6 +342,7 @@ async def resett(context):
         await msg.delete()
         await asyncio.sleep(5)
         await mes.delete()
+        await msgg.delete()
         return
 
     await save()
@@ -836,18 +840,19 @@ async def on_raw_message_edit(payload):
     channel = bot.get_channel(payload.channel_id)
     after = await channel.fetch_message(payload.message_id)
     log_chat = bot.get_channel(bot.data['logs'][str(after.guild.id)])
-    if len(before.content) > 1024:
-        before.content = before.content[0:1020] + "\n..."
-    if len(after.content) > 1024:
-        after.content = before.content[0:1020] + "\n..."
+    bc = f'{bot.CROSS_MARK} Not in Memory!'
+    if hasattr(before, 'content'):
+        if len(before.content) > 1024:
+            before.content = before.content[0:1020] + "\n..."
+        if len(after.content) > 1024:
+            after.content = before.content[0:1020] + "\n..."
+        bc = before.content
     if str(after.content) == "":
         return
     if after.author == bot.user:
         return
-    if before == None:
-        before = "Uncashed message : ("
     em = discord.Embed(description=f"**Message edited in {str(channel.mention)}** - [Message]({after.jump_url})", color=discord.Color.purple())
-    em.add_field(name=f"**Before**", value=str(before.content), inline=False)
+    em.add_field(name=f"**Before**", value=str(bc), inline=False)
     em.add_field(name=f"**After**", value=str(after.content), inline=False)
     em.set_author(name=str(after.author), icon_url=after.author.avatar_url)
     em.set_footer(text="MESSAGE ID: " + str(after.id))
@@ -859,12 +864,22 @@ async def on_raw_message_edit(payload):
 async def on_raw_message_delete(payload):
     message = payload.cached_message
     log_chat = bot.get_channel(bot.data['logs'][str(payload.guild_id)])  
-    if str(message.content) == "":
-        return
-    channel = message.channel
-    em = discord.Embed(description=f"**Message deleted in {str(channel.mention)}**\n{str(message.content)} - {message.author.mention}", color=discord.Color.red())
-    em.set_author(name=str(message.author), icon_url=message.author.avatar_url)
-    em.set_footer(text="MESSAGE ID: " + str(message.id))
+    bc = f'{bot.CROSS_MARK} Not in Memory!'
+    auth = ""
+    if hasattr(message, 'content'):
+        if len(message.content) > 1024:
+            message.content = message.content[0:1020] + "\n..."
+        if str(message.content) == "":
+            return
+        bc = message.content
+    if hasattr(message, 'author'):
+        auth =  f" - {message.author.mention}"
+    channel = bot.get_channel(payload.channel_id)
+    em = discord.Embed(description=f"**Message deleted in {str(channel.mention)}**\n{bc}{auth}", color=discord.Color.red())
+    if hasattr(message, 'author'):
+        em.set_author(name=str(message.author), icon_url=message.author.avatar_url)
+    if hasattr(message, 'id'):
+        em.set_footer(text="MESSAGE ID: " + str(message.id))
     await log_chat.send(embed=em)
 
     await save()
