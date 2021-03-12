@@ -4,6 +4,7 @@ import re
 import asyncio
 import json
 from datetime import datetime, timedelta
+import os
 
 bot = commands.Bot(command_prefix="$", intents=discord.Intents.all(), case_insensitive=True)
 
@@ -1023,7 +1024,7 @@ async def on_raw_reaction_add(payload):
     channel = bot.get_channel(payload.channel_id)
     guild = channel.guild
     message = await channel.fetch_message(payload.message_id)
-    if member.id == 811243240836825099:
+    if member.id == bot.user.id:
         return
     em = discord.Embed(description=f"**‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎Reaction added in {channel.mention}** - [Message]({message.jump_url})   ", color=discord.Color.green())
     em.add_field(name="Emoji", value=f"{str(emoji)}", inline=False)
@@ -1658,7 +1659,9 @@ async def on_guild_join(guild):
     bot.data['suggest']['val'][str(guild.id)] = {}
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+for file in os.listdir('./'):
+    if file.endswith('music.py'):
+        bot.load_extension(f"{file[:-3]}")
 
 
 
