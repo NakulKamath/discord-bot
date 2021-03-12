@@ -358,14 +358,9 @@ async def on_message(msg):
     if msg.author.id == bot.user.id:
         return
 
-    log_save_id = bot.data['logs'][str(msg.guild.id)]
-    if not isinstance(msg.channel, discord.channel.DMChannel):
-        if msg.guild.id == log_save_id:
-            return
-
     # get main log channel
     try:
-        chn = bot.data['logs'][str(msg.guild.id)]
+        chn = bot.get_channel(bot.data['logs'][str(msg.guild.id)])
     except AttributeError:
         # It is a DM channel message - It has no guild
         pass
@@ -395,43 +390,34 @@ async def on_message(msg):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # ATTACHMENT LOGGER
     if msg.attachments and not isinstance(msg.channel, discord.channel.DMChannel):  # only log non DMs
-        if msg.channel.id != chn.id and msg.channel.id != log_save_id:  # If the message is not in log channel - done to prevent infinite loop
 
-            # get date time of message creation
-            t = datetime.strftime(msg.created_at + timedelta(hours=5, minutes=30),
-                                  '%d/%m/%Y, %H:%M:%S hrs IST/GMT+5:30')
+        # get date time of message creation
+        t = datetime.strftime(msg.created_at,
+                                '%d/%m/%Y, %H:%M:%S')
 
-            # send a new log message for each attachment in the msg
-            for i in msg.attachments:
-                # usually len 1, just in case...
+        # send a new log message for each attachment in the msg
+        for i in msg.attachments:
+            # usually len 1, just in case...
 
-                # generate message
-                em = discord.Embed(description=f"**Attachment sent in {str(msg.channel.mention)}** - [Message]({msg.jump_url})", color=discord.Color.blue())
-                em.add_field(name='Author', value=msg.author, inline=False)
+            # generate message
+            em = discord.Embed(description=f"**Attachment sent in {str(msg.channel.mention)}** - [Message]({msg.jump_url})", color=discord.Color.blue())
+            em.add_field(name='Author', value=msg.author, inline=False)
+            if msg.content == '':
+                em.add_field(name='Message', value=f"{bot.CROSS_MARK} No message!")
+            else:
                 em.add_field(name='Message', value=msg.content)
-                em.add_field(name='Channel', value=msg.channel)
-                em.add_field(name='Server', value=msg.guild)
-                em.add_field(name='Link', value=i.url, inline=False)
-                await chn.send(embed=em)
+            em.add_field(name='Channel', value=msg.channel.mention)
+            em.add_field(name='Time', value=t)
+            em.add_field(name='Link', value=i.url, inline=False)
+            await chn.send(embed=em)
 
-                msge = f"**ORACLE ATTACHMENT LOGGING**\n" + \
-                      f"FROM: {msg.author.name}#{msg.author.discriminator} " \
-                      f"[{msg.author.id}]\n" + \
-                      f"Created IST Timestamp: {t}\n"
-                msge += f"Not a DM channel (I do not log DM Channels for Privacy),\nID: {msg.channel.id}" \
-                        f"\nNAME: {msg.channel.name}" \
-                        f"\nON SERVER: {msg.guild.name}"
-                msge += f"\nMessage was:\n```{msg.content}```\n"
-
-                if i.size < 8000000:  # 8 MB in bytes
-                    # can send attachment
-                    fi = await i.to_file()
-                    lgsvchannel = bot.get_channel(log_save_id)
-                    await lgsvchannel.send(msge, file=fi)
-                    await chn.send(msge, file=fi)
-                else:
-                    # cant send attachment, too large!
-                    await chn.send(msge+"\n**Couldn't Log attachment - Too large (Larger than 8000000 Bytes)**\n")
+            if i.size < 8000000:  # 8 MB in bytes
+                # can send attachment
+                fi = await i.to_file()
+                await chn.send('File:', file=fi)
+            else:
+                # cant send attachment, too large!
+                await chn.send('File:'+"\n**Couldn't Log attachment - Too large (Larger than 8000000 Bytes)**\n")
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # INVITE BLOCKER
     if msg.content.find("discord.gg") != -1 and not isinstance(msg.channel, discord.channel.DMChannel):
