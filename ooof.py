@@ -29,19 +29,25 @@ kicks = False
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
+@bot.command(aliases=["to"])
+@commands.has_permissions(manage_messages=True)
+async def ticketoption(context, param=None, emoji=None, *, op=None):
+    if param.upper() == 'ADD':
+        if emoji == None:
+            em = discord.Embed(description=f"{bot.CROSS_MARK} You must provide an emoji/option!\n Usage- `$ticketoption add (emoji) (option line)`")
+            await context.send(embed=em)
+            return
+        if op == None:
+            em = discord.Embed(description=f"{bot.CROSS_MARK} You must provide an emoji/option!\n Usage- `$ticketoption add (emoji) (option line)`")
+            await context.send(embed=em)
+            return
+        bot.data['ticket']['op'][str(context.guild.id)][f"{emoji}"] = str(op)
+        em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully added Emoji-Option pair to ticketing!\n {str(emoji)} - {op}")
+        mes = await context.send(embed=em)
+        await asyncio.sleep(5)
+        await mes.delete()
+        
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -318,6 +324,7 @@ async def resett(context):
         bot.data['ticket']['count'][str(context.guild.id)] = 1
         bot.data['ticket']['val'][str(context.guild.id)] = {}
         bot.data['ticket']['msg'][str(context.guild.id)] = ""
+        bot.data['ticket']['op'][str(context.guild.id)] = {}
         em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully reset ticket count!")
         mes = await context.send(embed=em)
         await context.message.delete()
@@ -1023,6 +1030,19 @@ async def on_raw_reaction_add(payload):
     em.set_footer(text="MESSAGE ID: " + str(message.id))
     await log_chat.send(embed=em)
     if message.id == bot.data['ticket']['msg'][str(guild.id)]:
+        options = ""
+        for emoji, op in bot.data['ticket']['op'][str(guild.id)].items():
+            options += str(emoji) + " - " + op + "\n"
+        em = discord.Embed(title='Select the type of issue!', description=f"{options}")
+        mes = await channel.send()
+        def check(reaction, user):
+            return reaction.message.id == mes.id and str(emoji) in ["<:The_Oracle:789821139928350740>", bot.CROSS_MARK, "<:minecraft:812967995752185858>", "🔨", "📜", "⚙️"] and user.id == member.id
+        try:
+            r, u = await bot.wait_for('reaction_add', check=check, timeout=30)
+        except asyncio.TimeoutError:
+            em = discord.Embed(description=f"{bot.CROSS_MARK}  You took too long to respond! Cancelling process!")
+            mem = await channel.send(embed=em)
+            return
         overwrites = {
         guild.default_role: discord.PermissionOverwrite(read_messages=False),
         member: discord.PermissionOverwrite(read_messages=True)}
@@ -1612,6 +1632,7 @@ async def on_guild_join(guild):
     bot.data['suggest']['chn'][str(guild.id)] = ""
     bot.data['suggest']['count'][str(guild.id)] = 1
     bot.data['suggest']['val'][str(guild.id)] = {}
+    bot.data['ticket']['op'][str(guild.id)] = {}
 
     bot.data['ticket']['chn'][str(guild.id)] = ""
     bot.data['ticket']['count'][str(guild.id)] = 1
