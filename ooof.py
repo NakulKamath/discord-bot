@@ -366,6 +366,47 @@ async def on_message(msg):
         # It is a DM channel message - It has no guild
         pass
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # INVITE BLOCKER
+    if msg.content.find("discord.gg") != -1 and not isinstance(msg.channel, discord.channel.DMChannel):
+        # if message has discord.gg type invite
+        ind = msg.content.find("discord.gg")
+        if msg.content[ind + len("discord.gg"):] == "/jDMYEV5":
+            # if the message is an invite for The Matrix, ignore it.
+            pass
+        else:
+            # Delete the message since invite has been found
+            em = discord.Embed(description=f"{bot.CROSS_MARK}  You can not send invite links!")
+            await msg.channel.send(embed=em) 
+            await chn.send(f"{msg.author.mention} | {msg.author.id} did a invite in {msg.channel}.")
+            await msg.delete()
+            return
+    elif msg.content.find("discordapp.com/invite") != -1 and not isinstance(msg.channel, discord.channel.DMChannel):
+        # if message has discordapp.com/invite type invite
+        ind = msg.content.find("discordapp.com/invite")
+        if msg.content[ind + len("discordapp.com/invite"):] == "/jDMYEV5":
+            # if the message is an invite for The Matrix, ignore it.
+            pass
+        else:
+            # Delete the message since invite has been found
+            em = discord.Embed(description=f"{bot.CROSS_MARK}  You can not send invite links!")
+            await msg.channel.send(embed=em) 
+            await chn.send(f"{msg.author.mention} | {msg.author.id} did a invite in {msg.channel}.")
+            await msg.delete()
+            return
+    elif msg.content.find("discord.com/invite") != -1 and not isinstance(msg.channel, discord.channel.DMChannel):
+        # if message has discord.com/invite type invite
+        ind = msg.content.find("discord.com/invite")
+        if msg.content[ind + len("discord.com/invite"):] == "/jDMYEV5":
+            # if the message is an invite for The Matrix, ignore it.
+            pass
+        else:
+            # Delete the message since invite has been found
+            em = discord.Embed(description=f"{bot.CROSS_MARK}  You can not send invite links!")
+            await msg.channel.send(embed=em) 
+            await chn.send(f"{msg.author.mention} | {msg.author.id} did a invite in {msg.channel}.")
+            await msg.delete()
+            return
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # TICKET LOGGER
     try:
         # get all currently open tickets
@@ -419,47 +460,6 @@ async def on_message(msg):
             else:
                 # cant send attachment, too large!
                 await chn.send('File:'+"\n**Couldn't Log attachment - Too large (Larger than 8000000 Bytes)**\n")
-#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # INVITE BLOCKER
-    if msg.content.find("discord.gg") != -1 and not isinstance(msg.channel, discord.channel.DMChannel):
-        # if message has discord.gg type invite
-        ind = msg.content.find("discord.gg")
-        if msg.content[ind + len("discord.gg"):] == "/jDMYEV5":
-            # if the message is an invite for The Matrix, ignore it.
-            pass
-        else:
-            # Delete the message since invite has been found
-            em = discord.Embed(description=f"{bot.CROSS_MARK}  You can not send invite links!")
-            await msg.channel.send(embed=em) 
-            await chn.send(f"{msg.author.mention} | {msg.author.id} did a invite in {msg.channel}.")
-            await msg.delete()
-            return
-    elif msg.content.find("discordapp.com/invite") != -1 and not isinstance(msg.channel, discord.channel.DMChannel):
-        # if message has discordapp.com/invite type invite
-        ind = msg.content.find("discordapp.com/invite")
-        if msg.content[ind + len("discordapp.com/invite"):] == "/jDMYEV5":
-            # if the message is an invite for The Matrix, ignore it.
-            pass
-        else:
-            # Delete the message since invite has been found
-            em = discord.Embed(description=f"{bot.CROSS_MARK}  You can not send invite links!")
-            await msg.channel.send(embed=em) 
-            await chn.send(f"{msg.author.mention} | {msg.author.id} did a invite in {msg.channel}.")
-            await msg.delete()
-            return
-    elif msg.content.find("discord.com/invite") != -1 and not isinstance(msg.channel, discord.channel.DMChannel):
-        # if message has discord.com/invite type invite
-        ind = msg.content.find("discord.com/invite")
-        if msg.content[ind + len("discord.com/invite"):] == "/jDMYEV5":
-            # if the message is an invite for The Matrix, ignore it.
-            pass
-        else:
-            # Delete the message since invite has been found
-            em = discord.Embed(description=f"{bot.CROSS_MARK}  You can not send invite links!")
-            await msg.channel.send(embed=em) 
-            await chn.send(f"{msg.author.mention} | {msg.author.id} did a invite in {msg.channel}.")
-            await msg.delete()
-            return
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # return prefix if bot is tagged (tag must be first in the msg)
     if msg.content.startswith(f"<@!{bot.user.id}>"):

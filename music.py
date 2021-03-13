@@ -186,23 +186,23 @@ class Music(commands.Cog):
             await context.send(embed=em)
 
     @commands.command(pass_context=True)
-    async def stop(self, context):
+    async def skip(self, context):
         voice = get(self.bot.voice_clients, guild=context.guild)
 
         if voice and voice.is_playing():
             voice.stop()
-            em = discord.Embed(description=f"{self.bot.TICK_MARK} Stopped the track!")
+            em = discord.Embed(description=f"{self.bot.TICK_MARK} Skipped the track!")
             await context.send(embed=em)
         elif voice and voice.is_paused():
             voice.stop()
-            em = discord.Embed(description=f"{self.bot.TICK_MARK} Stopped the paused track!")
+            em = discord.Embed(description=f"{self.bot.TICK_MARK} Skipped the paused track!")
             await context.send(embed=em)
         else:
             em = discord.Embed(description=f"{self.bot.CROSS_MARK} There isn't anything playing!")
             await context.send(embed=em)
 
     @commands.command(pass_context=True)
-    async def clear(self, context):
+    async def stop(self, context):
         global queues
         if voice and voice.is_playing():
             voice.stop()
