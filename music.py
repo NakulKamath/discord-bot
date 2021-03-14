@@ -1,259 +1,510 @@
-import discord
-from discord.ext import commands
-from discord.utils import get
-import youtube_dl
-import os
-import shutil
 import asyncio
+import datetime as dt
+import random
+import re
+import typing as t
+from enum import Enum
 
-queues = {}
+import discord
+import wavelink
+from discord.ext import commands
 
-class Music(commands.Cog):
-    def __init__(self, bot):        
+dj_role = 'dj'
+modde = ''
+stopped = False
+
+URL_REGEX = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
+OPTIONS = {
+    "1️⃣": 0,
+    "2⃣": 1,
+    "3⃣": 2,
+    "4⃣": 3,
+    "5⃣": 4,
+}
+
+
+class AlreadyConnectedToChannel(commands.CommandError):
+    pass
+
+
+class NoVoiceChannel(commands.CommandError):
+    pass
+
+
+class QueueIsEmpty(commands.CommandError):
+    pass
+
+
+class NoTracksFound(commands.CommandError):
+    pass
+
+
+class PlayerIsAlreadyPaused(commands.CommandError):
+    pass
+
+
+class NoMoreTracks(commands.CommandError):
+    pass
+
+
+class NoPreviousTracks(commands.CommandError):
+    pass
+
+
+class InvalidRepeatMode(commands.CommandError):
+    pass
+
+
+class RepeatMode(Enum):
+    NONE = 0
+    ONE = 1
+    ALL = 2
+
+
+class Queue:
+    def __init__(self):
+        self._queue = []
+        self.position = 0
+        self.repeat_mode = RepeatMode.NONE
+
+    @property
+    def is_empty(self):
+        return not self._queue
+
+    @property
+    def current_track(self):
+        if not self._queue:
+            raise QueueIsEmpty
+
+        if self.position <= len(self._queue) - 1:
+            return self._queue[self.position]
+
+    @property
+    def upcoming(self):
+        if not self._queue:
+            raise QueueIsEmpty
+
+        return self._queue[self.position + 1:]
+
+    @property
+    def history(self):
+        if not self._queue:
+            raise QueueIsEmpty
+
+        return self._queue[:self.position]
+
+    @property
+    def length(self):
+        return len(self._queue)
+
+    def add(self, *args):
+        self._queue.extend(args)
+
+    def get_next_track(self):
+        global stopped
+        if not self._queue:
+            stopped = True
+            raise QueueIsEmpty
+
+        self.position += 1
+
+        if self.position < 0:
+            return None
+        elif self.position > len(self._queue) - 1:
+            if self.repeat_mode == RepeatMode.ALL:
+                self.position = 0
+            else:
+                return None
+
+        return self._queue[self.position]
+
+    def shuffle(self):
+        if not self._queue:
+            raise QueueIsEmpty
+
+        upcoming = self.upcoming
+        random.shuffle(upcoming)
+        self._queue = self._queue[:self.position + 1]
+        self._queue.extend(upcoming)
+
+    def set_repeat_mode(self, mode):
+        if mode == "none":
+            self.repeat_mode = RepeatMode.NONE
+        elif mode == "1":
+            self.repeat_mode = RepeatMode.ONE
+        elif mode == "all":
+            self.repeat_mode = RepeatMode.ALL
+
+    def empty(self):
+        self._queue.clear()
+        self.position = 0
+
+
+class Player(wavelink.Player):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.queue = Queue()
+
+    async def connect(self, ctx, channel=None):
+        if self.is_connected:
+            raise AlreadyConnectedToChannel
+
+        if (channel := getattr(ctx.author.voice, "channel", channel)) is None:
+            raise NoVoiceChannel
+
+        await super().connect(channel.id)
+        return channel
+
+    async def teardown(self):
+        try:
+            await self.destroy()
+        except KeyError:
+            pass
+
+    async def add_tracks(self, ctx, tracks):
+        if not tracks:
+            raise NoTracksFound
+
+        if isinstance(tracks, wavelink.TrackPlaylist):
+            self.queue.add(*tracks.tracks)
+        elif len(tracks) == 1:
+            self.queue.add(tracks[0])
+            embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Added {tracks[0].title} to the queue!")
+            await ctx.send(embed=embed)
+        else:
+            if (track := await self.choose_track(ctx, tracks)) is not None:
+                self.queue.add(track)
+                embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Added {track.title} to the queue!")
+                await ctx.send(embed=embed)
+
+        if not self.is_playing and not self.queue.is_empty:
+            await self.start_playback()
+
+    async def choose_track(self, ctx, tracks):
+        def _check(r, u):
+            return (
+                r.emoji in OPTIONS.keys()
+                and u == ctx.author
+                and r.message.id == msg.id
+            )
+
+        embed = discord.Embed(
+            title="Choose a song",
+            description=(
+                "\n".join(
+                    f"**{i+1}.** {t.title} ({t.length//60000}:{str(t.length%60).zfill(2)})"
+                    for i, t in enumerate(tracks[:5])
+                ) + "\n *Make sure to wait for all reactions"
+            ),
+            colour=discord.Color.blue(),
+            timestamp=dt.datetime.utcnow()
+        )
+        embed.set_author(name="Query Results")
+        embed.set_footer(text=f"Invoked by {ctx.author.display_name}", icon_url=ctx.author.avatar_url)
+
+        msg = await ctx.send(embed=embed)
+        for emoji in list(OPTIONS.keys())[:min(len(tracks), len(OPTIONS))]:
+            await msg.add_reaction(emoji)
+
+        try:
+            reaction, _ = await self.bot.wait_for("reaction_add", timeout=60.0, check=_check)
+        except asyncio.TimeoutError:
+            await msg.delete()
+            await ctx.message.delete()
+        else:
+            await msg.delete()
+            return tracks[OPTIONS[reaction.emoji]]
+
+    async def start_playback(self):
+        await self.play(self.queue.current_track)
+
+    async def advance(self):
+        try:
+            if (track := self.queue.get_next_track()) is not None:
+                await self.play(track)
+        except QueueIsEmpty:
+            pass
+
+    async def repeat_track(self):
+        await self.play(self.queue.current_track)
+
+
+class Music(commands.Cog, wavelink.WavelinkMixin):
+    def __init__(self, bot):
         self.bot = bot
+        self.wavelink = wavelink.Client(bot=bot)
+        self.bot.loop.create_task(self.start_nodes())
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"The wait for $"))
 
-    @commands.command(pass_context=True)
-    async def join(self, context):
-        global voice
-        if hasattr(context.message.author.voice, 'channel'):
-            channel = context.message.author.voice.channel
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member, before, after):
+        if not member.bot and after.channel is None:
+            if not [m for m in before.channel.members if not m.bot]:
+                await self.get_player(member.guild).teardown()
+                await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"The wait for $"))
+
+    @wavelink.WavelinkMixin.listener()
+    async def on_node_ready(self, node):
+        print(f" Wavelink node `{node.identifier}` ready.")
+
+    @wavelink.WavelinkMixin.listener("on_track_stuck")
+    @wavelink.WavelinkMixin.listener("on_track_end")
+    @wavelink.WavelinkMixin.listener("on_track_exception")
+    async def on_player_stop(self, node, payload):
+        if payload.player.queue.repeat_mode == RepeatMode.ONE:
+            await payload.player.repeat_track()
         else:
-            em = discord.Embed(description=f"{self.bot.CROSS_MARK} You are not in any voice channell!")
-            await context.send(embed=em)
-            return
-        voice = get(self.bot.voice_clients, guild=context.guild)
+            await payload.player.advance()
 
-        if voice and voice.is_connected():
-            await voice.move_to(channel)
-        else:
-            voice = await channel.connect()
-        
-        em = discord.Embed(description=f"{self.bot.TICK_MARK} Connected to {channel}!")
-        await context.send(embed=em)
+    async def cog_check(self, ctx):
+        if isinstance(ctx.channel, discord.DMChannel):
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> Music commands are not available in DMs!")
+            await ctx.send(embed=embed)
+            return False
 
-    @commands.command(pass_context=True)
-    async def leave(self, context):
-        global voice
-        if hasattr(context.message.author.voice, 'channel'):
-            channel = context.message.author.voice.channel
-        else:
-            em = discord.Embed(description=f"{self.bot.CROSS_MARK} You are not in any voice channell!")
-            await context.send(embed=em)
-            return
-        voice = get(self.bot.voice_clients, guild=context.guild)
+        return True
 
-        if voice and voice.is_connected():
-            await voice.disconnect()
-            em = discord.Embed(description=f"{self.bot.TICK_MARK} Disconnected from {channel}!")
-            await context.send(embed=em)
-        
-    @commands.command(pass_context=True)
-    async def play(self, context, url: str):
-        global voice
-        global queues
-        voice = get(self.bot.voice_clients, guild=context.guild)
-        if not hasattr(voice, 'is_connected'):
-            if hasattr(context.message.author.voice, 'channel'):
-                channel = context.message.author.voice.channel
-            else:
-                em = discord.Embed(description=f"{self.bot.CROSS_MARK} You are not in any voice channell!")
-                await context.send(embed=em)
-                return
-            voice = get(self.bot.voice_clients, guild=context.guild)
+    async def start_nodes(self):
+        await self.bot.wait_until_ready()
 
-            if voice and voice.is_connected():
-                await voice.move_to(channel)
-            else:
-                voice = await channel.connect()
-            
-            em = discord.Embed(description=f"{self.bot.TICK_MARK} Connected to {channel}!")
-            await context.send(embed=em)
-        def check_queue():
-            Queue_infile = os.path.isdir("./Queue")
-            if Queue_infile is True:
-                DIR = os.path.abspath(os.path.realpath("Queue"))
-                length = len(os.listdir(DIR))
-                still_q = length - 1
-                try:
-                    first_file = os.listdir(DIR)[0]
-                except:
-                    queues.clear()
-                    return
-                main_location = os.path.dirname(os.path.realpath(__file__))
-                song_path = os.path.abspath(os.path.realpath("Queue") + "\\" + first_file)
-                if length != 0:
-                    print(still_q)
-                    song_there = os.path.isfile("song.mp3")
-                    if song_there:
-                        os.remove("song.mp3")
-                    shutil.move(song_path, main_location)
-                    for file in os.listdir("./"):
-                        if file.endswith(".mp3"):
-                            os.rename(file, 'song.mp3')
-
-                    voice.play(discord.FFmpegPCMAudio("song.mp3"), after=lambda e: check_queue())
-                    voice.source = discord.PCMVolumeTransformer(voice.source)
-                    voice.source.volume = 0.7
-
-                else:
-                    queues.clear()
-                    return
-            else:
-                queues.clear()
-                print("No queued songs")
-
-        song_there = os.path.isfile("song.mp3")
-        try:
-            if song_there == True:
-                os.remove("song.mp3")
-                queues.clear()
-                print("Removed old song")
-        except PermissionError:
-            em = discord.Embed(description=f"{self.bot.CROSS_MARK} Use `$add` instead to add a song!")
-            await context.send(embed=em)
-            return
-
-        Queue_infile = os.path.isdir('Queue')
-
-        try:
-            Queue_folder = "./Queue"
-            if Queue_folder is True:
-                shutil.rmtree(Queue_folder)
-        except:
-            print("No queue folder!")
-        
-        em = discord.Embed(description=f"{self.bot.TICK_MARK} Starting the track!")
-        await context.send(embed=em)
-
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': "384",
-            }],
+        nodes = {
+            "MAIN": {
+                "host": "127.0.0.1",
+                "port": 2333,
+                "rest_uri": "http://127.0.0.1:2333",
+                "password": "youshallnotpass",
+                "identifier": "MAIN",
+                "region": "europe",
+            }
         }
 
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            print("downloading track")
-            ydl.download([url])
+        for node in nodes.values():
+            await self.wavelink.initiate_node(**node)
 
-        for file in os.listdir('./'):
-            if file.endswith('.mp3'):
-                name = file
-                print(f"Renamed file: {file}")
-                asyncio.sleep(5)
-                os.rename(file, "song.mp3")
+    def get_player(self, obj):
+        if isinstance(obj, commands.Context):
+            return self.wavelink.get_player(obj.guild.id, cls=Player, context=obj)
+        elif isinstance(obj, discord.Guild):
+            return self.wavelink.get_player(obj.id, cls=Player)
 
-        voice = get(self.bot.voice_clients, guild=context.guild)
-        
-        voice.play(discord.FFmpegPCMAudio("song.mp3"), after=lambda e: check_queue())
-        voice.source = discord.PCMVolumeTransformer(voice.source)
-        voice.source.volume = 0.7
+    @commands.command(name="connect", aliases=["join", 'c', 'j'])
+    async def connect_command(self, ctx, *, channel: t.Optional[discord.VoiceChannel]):
+        await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"Playing music for {ctx.message.author}"))
+        player = self.get_player(ctx)
+        channel = await player.connect(ctx, channel)
+        embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Connected to {channel.name}!")
+        await ctx.send(embed=embed)
 
-        name = name.rsplit("-", 2)
-        print("playing")
-        
-    @commands.command(pass_context=True)
-    async def pause(self, context):
-        voice = get(self.bot.voice_clients, guild=context.guild)
+    @connect_command.error
+    async def connect_command_error(self, ctx, exc):
+        if isinstance(exc, AlreadyConnectedToChannel):
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> Already connected to a voice channel!")
+            await ctx.send(embed=embed)
+        elif isinstance(exc, NoVoiceChannel):
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in a voice channel!")
+            await ctx.send(embed=embed)
 
-        if voice and voice.is_playing():
-            voice.pause()
-            em = discord.Embed(description=f"{self.bot.TICK_MARK} Paused the track!")
-            await context.send(embed=em)
-        elif voice and voice.is_paused():
-            em = discord.Embed(description=f"{self.bot.CROSS_MARK} Track already paused!")
-            await context.send(embed=em)
+    @commands.command(name="disconnect", aliases=["leave", 'l', 'd'])
+    async def disconnect_command(self, ctx):
+        await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"The wait for $"))
+        player = self.get_player(ctx)
+        await player.teardown()
+        embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Disconnected!")
+        await ctx.send(embed=embed)
+
+    @commands.command(name="play", aliases=['add', 'start', 'p'])
+    async def play_command(self, ctx, *, query: t.Optional[str]):
+        player = self.get_player(ctx)
+        await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"Playing music for {ctx.message.author}"))
+        if not player.is_connected:
+            await player.connect(ctx)
+
+        if query is None:
+            if player.queue.is_empty:
+                raise QueueIsEmpty
+
+            await player.set_pause(False)
+            embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Resumed!")
+            await ctx.send(embed=embed)
+
         else:
-            em = discord.Embed(description=f"{self.bot.CROSS_MARK} There isn't anything playing!")
-            await context.send(embed=em)
+            query = query.strip("<>")
+            if not re.match(URL_REGEX, query):
+                query = f"ytsearch:{query}"
 
-    @commands.command(pass_context=True)
-    async def resume(self, context):
-        voice = get(self.bot.voice_clients, guild=context.guild)
+            await player.add_tracks(ctx, await self.wavelink.get_tracks(query))
 
-        if voice and voice.is_paused():
-            voice.resume()
-            em = discord.Embed(description=f"{self.bot.TICK_MARK} Resumed the track!")
-            await context.send(embed=em)
-        elif voice and voice.is_playing():
-            em = discord.Embed(description=f"{self.bot.TICK_MARK} Track is already playing!")
-            await context.send(embed=em)
-        else:
-            em = discord.Embed(description=f"{self.bot.CROSS_MARK} There isn't anything playing!")
-            await context.send(embed=em)
+    @play_command.error
+    async def play_command_error(self, ctx, exc):
+        if isinstance(exc, QueueIsEmpty):
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> The queue is empty!")
+            await ctx.send(embed=embed)
+        elif isinstance(exc, NoVoiceChannel):
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in a voice channel!")
+            await ctx.send(embed=embed)
 
-    @commands.command(pass_context=True)
-    async def skip(self, context):
-        voice = get(self.bot.voice_clients, guild=context.guild)
+    @commands.command(name="pause", aliases=['halt'])
+    async def pause_command(self, ctx):
+        player = self.get_player(ctx)
 
-        if voice and voice.is_playing():
-            voice.stop()
-            em = discord.Embed(description=f"{self.bot.TICK_MARK} Skipped the track!")
-            await context.send(embed=em)
-        elif voice and voice.is_paused():
-            voice.stop()
-            em = discord.Embed(description=f"{self.bot.TICK_MARK} Skipped the paused track!")
-            await context.send(embed=em)
-        else:
-            em = discord.Embed(description=f"{self.bot.CROSS_MARK} There isn't anything playing!")
-            await context.send(embed=em)
+        if player.is_paused:
+            raise PlayerIsAlreadyPaused
 
-    @commands.command(pass_context=True)
-    async def stop(self, context):
-        global queues
-        if voice and voice.is_playing():
-            voice.stop()
-            queues.clear()
-            em = discord.Embed(description=f"{self.bot.TICK_MARK} Stopped the track and cleared the queue!")
-            await context.send(embed=em)
-        elif voice and voice.is_paused():
-            voice.stop()
-            queues.clear()
-            em = discord.Embed(description=f"{self.bot.TICK_MARK} Stopped the paused track and cleared the queue!")
-            await context.send(embed=em)
-        else:
-            em = discord.Embed(description=f"{self.bot.CROSS_MARK} There isn't anything playing!")
-            await context.send(embed=em)
+        await player.set_pause(True)
+        embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Paused!")
+        await ctx.send(embed=embed)
 
+    @pause_command.error
+    async def pause_command_error(self, ctx, exc):
+        if isinstance(exc, PlayerIsAlreadyPaused):
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> Already paused!")
+            await ctx.send(embed=embed)
 
+    @commands.command(name="stop", aliases=['clear'])
+    @commands.has_role(dj_role)
+    async def stop_command(self, ctx):
+        await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"The wait for $"))
+        player = self.get_player(ctx)
+        player.queue.empty()
+        await player.stop()
+        embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Stopped!")
+        await ctx.send(embed=embed)
 
-    @commands.command(pass_context=True)
-    async def add(self, context, url: str):
-        global queues
-        Queue_infile = os.path.isdir('./Queue')
-        if Queue_infile is False:
-            os.mkdir("Queue")
-        DIR = os.path.abspath(os.path.realpath("Queue"))
-        q_num = len(os.listdir(DIR))
-        q_num += 1
-        add_queue = True
-        while add_queue:
-            if q_num in  queues:
-                q_num += 1
-            else:
-                add_queue = False
-                queues[q_num] = q_num
+    @commands.command(name="next", aliases=["skip"])
+    async def next_command(self, ctx):
+        player = self.get_player(ctx)
 
-        queue_path = os.path.abspath(os.path.realpath("Queue")) + f"\song{q_num}.%(ext)s"
+        if not player.queue.upcoming:
+            raise NoMoreTracks
 
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': queue_path,
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': "384",
-            }],
-        }
+        await player.stop()
+        embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Playing the next track!")
+        await ctx.send(embed=embed)
 
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            print("downloading track")
-            ydl.download([url])
-        em = discord.Embed(description=f"{self.bot.TICK_MARK} Added track to queue!")
-        await context.send(embed=em)
+    @next_command.error
+    async def next_command_error(self, ctx, exc):
+        if isinstance(exc, QueueIsEmpty):
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> The queue is empty!")
+            await ctx.send(embed=embed)
+        elif isinstance(exc, NoMoreTracks):
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> The queue is empty!")
+            await ctx.send(embed=embed)
+
+    @commands.command(name="previous", aliases=['prev'])
+    async def previous_command(self, ctx):
+        player = self.get_player(ctx)
+
+        if not player.queue.history:
+            raise NoPreviousTracks
+
+        player.queue.position -= 2
+        await player.stop()
+        embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Playing the previous track!")
+        await ctx.send(embed=embed)
+
+    @previous_command.error
+    async def previous_command_error(self, ctx, exc):
+        if isinstance(exc, QueueIsEmpty):
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> The queue is empty!")
+            await ctx.send(embed=embed)
+        elif isinstance(exc, NoPreviousTracks):
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> No previous tracks in queue!")
+            await ctx.send(embed=embed)
+
+    @commands.command(name="shuffle", aliases=['shu'])
+    @commands.has_role(dj_role)
+    async def shuffle_command(self, ctx):
+        player = self.get_player(ctx)
+        player.queue.shuffle()
+        embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Queue shuffled!")
+        await ctx.send(embed=embed)
+
+    @shuffle_command.error
+    async def shuffle_command_error(self, ctx, exc):
+        if isinstance(exc, QueueIsEmpty):
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> The queue is empty!")
+            await ctx.send(embed=embed)
+
+    @commands.command(name="repeat")
+    async def repeat_command(self, ctx, mode: str=None):
+        global modde
+        if mode not in ("off", "1", "all"):
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> Give a mode `off`, `1` or `all` and reuse the command!")
+            await ctx.send(embed=embed)
+            raise InvalidRepeatMode
+        if mode == "off":
+            mode = "none"
+        modde = mode
+        player = self.get_player(ctx)
+        player.queue.set_repeat_mode(mode)
+        embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Repeat mode - `{mode}`")
+        await ctx.send(embed=embed)
+
+    @commands.command(name="queue", aliases=['q', 'que'])
+    async def queue_command(self, ctx, show: t.Optional[int] = 10):
+        player = self.get_player(ctx)
+
+        if player.queue.is_empty:
+            raise QueueIsEmpty
+
+        embed = discord.Embed(
+            title="Queue",
+            description=f"Showing up to next {show} tracks",
+            colour=discord.Color.blue(),
+            timestamp=dt.datetime.utcnow()
+        )
+        embed.set_author(name="Query Results")
+        embed.set_footer(text=f"Requested by {ctx.author.display_name}", icon_url=ctx.author.avatar_url)
+        embed.add_field(
+            name="Currently playing",
+            value=getattr(player.queue.current_track, "title", "No tracks currently playing."),
+            inline=False
+        )
+        if upcoming := player.queue.upcoming:
+            embed.add_field(
+                name="Next up",
+                value="\n".join(t.title for t in upcoming[:show]),
+                inline=False
+            )
+
+        msg = await ctx.send(embed=embed)
+
+    @commands.command(name="now_playing", aliases=['np'])
+    async def now_playing_command(self, ctx, show: t.Optional[int] = 10):
+        player = self.get_player(ctx)
+
+        if player.queue.is_empty:
+            raise QueueIsEmpty
+
+        embed = discord.Embed(
+            title="Now playing",
+            colour=discord.Color.blue(),
+            timestamp=dt.datetime.utcnow()
+        )
+        embed.set_author(name="Query Results")
+        embed.set_footer(text=f"Requested by {ctx.author.display_name}", icon_url=ctx.author.avatar_url)
+        embed.add_field(
+            name="Currently playing",
+            value=getattr(player.queue.current_track, "title", "No tracks currently playing."),
+            inline=False
+        )
+
+        msg = await ctx.send(embed=embed)
+
+    @queue_command.error
+    async def queue_command_error(self, ctx, exc):
+        print('ran')
+        global stopped
+        if isinstance(exc, QueueIsEmpty):
+            if stopped == True:
+                await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"The wait for $"))
+                stopped = False
+            embed = discord.Embed(description=f"<:tick_mark:814801884358901770> The queue is empty!")
+            await ctx.send(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Music(bot))

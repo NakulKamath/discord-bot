@@ -30,25 +30,19 @@ kicks = False
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@bot.command(aliases=["to"])
+@bot.command(aliases=['ct', 'rt', 'resolveticket'])
 @commands.has_permissions(manage_messages=True)
-async def ticketoption(context, param=None, emoji: discord.Emoji=None, *, op=None):
-    print(emoji)
-    if param.upper() == 'ADD':
-        if emoji == None:
-            em = discord.Embed(description=f"{bot.CROSS_MARK} You must provide an emoji/option!\n Usage- `$ticketoption add (emoji) (option line)`")
-            await context.send(embed=em)
-            return
-        if op == None:
-            em = discord.Embed(description=f"{bot.CROSS_MARK} You must provide an emoji/option!\n Usage- `$ticketoption add (emoji) (option line)`")
-            await context.send(embed=em)
-            return
-        bot.data['ticket']['op'][str(context.guild.id)][str(emoji)] = str(op)
-        em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully added Emoji-Option pair to ticketing!\n {str(emoji)} - {op}")
-        mes = await context.send(embed=em)
-        await asyncio.sleep(5)
-        await mes.delete()
-        
+async def closeticket(context, *, reason: str=None):
+    chn = context.channel
+    if str(chn) in bot.data['ticket']['val'][str(context.guild.id)]:
+        mem = bot.get_user(bot.data['ticket']['val'][str(context.guild.id)][str(chn)])
+        em = discord.Embed(description="Resolved your ticket!")
+        em.add_field(name="Reason", value=reason)
+        em.set_footer(text=f"Resolved by {context.message.author}", icon_url=context.message.author.avatar_url)
+        await mem.send(embed=em)
+        await chn.delete()
+        del bot.data['ticket']['val'][str(context.guild.id)][str(chn)]
+
     await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -803,7 +797,7 @@ async def owofy(context, message: discord.Message=None):
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_ready():
-    await bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game("with the lives of RAIDERS"))
+    await bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game("The wait for $"))
     print('Bot is now online!')
 
     await save()
@@ -1042,11 +1036,12 @@ async def on_raw_reaction_add(payload):
         try:
             r, u = await bot.wait_for('reaction_add', timeout= 30, check=check)
         except asyncio.TimeoutError:
-            em = discord.Embed(description=f"{bot.CROSS_MARK} You ran out of time! Please re-type the command!")
-            me = await channel.channel.send(embed=em)
+            em = discord.Embed(description=f"{bot.CROSS_MARK} You ran out of time! Please re-react!")
+            me = await channel.send(embed=em)
             await asyncio.sleep(5)
             await mes.delete()
             await me.delete()
+            await message.remove_reaction(emoji, member)
             return
         if str(r.emoji) == bot.CROSS_MARK:
             em = discord.Embed(description=f"{bot.CROSS_MARK} {member.mention} Cancelling process!")
@@ -1071,6 +1066,7 @@ async def on_raw_reaction_add(payload):
         await asyncio.sleep(5)
         await mes.delete()
         await memm.delete()
+        bot.data['ticket']['val'][str(guild.id)][str(chn)] = member.id
 
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
