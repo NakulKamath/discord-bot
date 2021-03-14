@@ -804,6 +804,11 @@ async def on_ready():
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_member_ban(guild, user):
+    if not hasattr(guild, 'id'):
+        return
+    else:
+        if str(guild.id) not in bot.data['logs']:
+            return
     global ban_reason
     log_chat = bot.get_channel(bot.data['logs'][str(guild.id)])
     em = discord.Embed(description=f"**Member banned**\n {user.mention}", color=discord.Color.red())
@@ -820,6 +825,11 @@ async def on_raw_message_edit(payload):
     before = payload.cached_message
     channel = bot.get_channel(payload.channel_id)
     after = await channel.fetch_message(payload.message_id)
+    if not hasattr(after.guild, 'id'):
+        return
+    else:
+        if str(after.guild.id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(after.guild.id)])
     bc = f'{bot.CROSS_MARK} Not in Memory!'
     if hasattr(before, 'content'):
@@ -844,6 +854,11 @@ async def on_raw_message_edit(payload):
 @bot.event
 async def on_raw_message_delete(payload):
     message = payload.cached_message
+    if not hasattr(payload, 'guild_id'):
+        return
+    else:
+        if str(payload.guild_id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(payload.guild_id)])  
     bc = f'{bot.CROSS_MARK} Not in Memory!'
     auth = ""
@@ -867,6 +882,11 @@ async def on_raw_message_delete(payload):
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_raw_bulk_message_delete(payload):
+    if not hasattr(payload, 'guild_id'):
+        return
+    else:
+        if str(payload.guild_id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(payload.guild_id)])
     messages = payload.cached_messages
     message_contents = "\n".join([str(message.author.mention)+" : "+message.content for message in messages])
@@ -879,6 +899,11 @@ async def on_raw_bulk_message_delete(payload):
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_member_join(member):
+    if not hasattr(member.guild, 'id'):
+        return
+    else:
+        if str(member.guild.id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(member.guild.id)])
     date_format = "%a, %d %b %Y %I:%M %p"
     em = discord.Embed(description= f"**Member Joined** - {member.mention}", color=discord.Color.green())
@@ -894,6 +919,11 @@ async def on_member_join(member):
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_member_remove(member):
+    if not hasattr(member.guild, 'id'):
+        return
+    else:
+        if str(member.guild.id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(member.guild.id)])
     global kicks
     if kicks == True:
@@ -915,6 +945,11 @@ async def on_member_remove(member):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_member_update(before, after):
+    if not hasattr(after.guild, 'id'):
+        return
+    else:
+        if str(after.guild.id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(after.guild.id)])
     if before.roles != after.roles:
         for role in before.roles:
@@ -966,6 +1001,11 @@ async def on_member_update(before, after):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_invite_create(invite):
+    if not hasattr(invite.guild, 'id'):
+        return
+    else:
+        if str(invite.guild.id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(invite.guild.id)])
     em = discord.Embed(title= "New invite created", color=discord.Color.green())
     em.add_field(name="Invite", value=str(invite), inline=False)
@@ -979,6 +1019,11 @@ async def on_invite_create(invite):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_invite_delete(invite):
+    if not hasattr(invite.guild, 'id'):
+        return
+    else:
+        if str(invite.guild.id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(invite.guild.id)])
     em = discord.Embed(title= "Old invite revoked", color=discord.Color.red())
     em.add_field(name="Invite", value=str(invite), inline=False)
@@ -990,6 +1035,11 @@ async def on_invite_delete(invite):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_channel_create(channel):
+    if not hasattr(channel.guild, 'id'):
+        return
+    else:
+        if str(channel.guild.id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(channel.guild.id)])
     em = discord.Embed(title=f"Channel Created - #{channel}", color=discord.Color.green())
     em.add_field(name="Catrgory", value=f"`{channel.category}`")
@@ -1001,6 +1051,11 @@ async def on_guild_channel_create(channel):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_channel_delete(channel):
+    if not hasattr(channel.guild, 'id'):
+        return
+    else:
+        if str(channel.guild.id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(channel.guild.id)])
     em = discord.Embed(title=f"Channel Deleted - #{channel}", color=discord.Color.red())
     em.add_field(name="Catrgory", value=f"`{channel.category}`")
@@ -1012,6 +1067,11 @@ async def on_guild_channel_delete(channel):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_raw_reaction_add(payload):
+    if not hasattr(payload, 'guild_id'):
+        return
+    else:
+        if str(payload.guild_id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(payload.guild_id)])
     emoji = payload.emoji
     member = payload.member
@@ -1035,6 +1095,7 @@ async def on_raw_reaction_add(payload):
             return reaction.message.id == mes.id and str(reaction.emoji) in [bot.TICK_MARK, bot.CROSS_MARK] and user.id == member.id
         try:
             r, u = await bot.wait_for('reaction_add', timeout= 30, check=check)
+            u = u
         except asyncio.TimeoutError:
             em = discord.Embed(description=f"{bot.CROSS_MARK} You ran out of time! Please re-react!")
             me = await channel.send(embed=em)
@@ -1072,6 +1133,11 @@ async def on_raw_reaction_add(payload):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_raw_reaction_remove(payload):
+    if not hasattr(payload, 'guild_id'):
+        return
+    else:
+        if str(payload.guild_id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(payload.guild_id)])
     emoji = payload.emoji
     user = payload.user_id
@@ -1089,6 +1155,11 @@ async def on_raw_reaction_remove(payload):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_raw_reaction_clear(payload):
+    if not hasattr(payload, 'guild_id'):
+        return
+    else:
+        if str(payload.guild_id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(payload.guild_id)])
     channel = bot.get_channel(payload.channel_id)
     message = await channel.fetch_message(payload.message_id)
@@ -1101,6 +1172,11 @@ async def on_raw_reaction_clear(payload):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_raw_reaction_clear_emoji(payload):
+    if not hasattr(payload, 'guild_id'):
+        return
+    else:
+        if str(payload.guild_id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(payload.guild_id)])
     emoji = payload.emoji
     channel = bot.get_channel(payload.channel_id)
@@ -1115,6 +1191,11 @@ async def on_raw_reaction_clear_emoji(payload):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_channel_update(before, after):
+    if not hasattr(after.guild, 'id'):
+        return
+    else:
+        if str(after.guild.id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(after.guild.id)])
     valueb = ""
     valuea = ""
@@ -1161,6 +1242,11 @@ async def on_guild_channel_update(before, after):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_channel_pins_update(channel, last_pin):
+    if not hasattr(channel.guild, 'id'):
+        return
+    else:
+        if str(channel.guild.id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(channel.guild.id)])
     status = "Pins Updated"
     pins = await channel.pins()
@@ -1179,6 +1265,11 @@ async def on_guild_channel_pins_update(channel, last_pin):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_update(before, after):
+    if not hasattr(after.guild, 'id'):
+        return
+    else:
+        if str(after.guild.id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(after.guild.id)])
     if before.banner != after.banner:
         emold = discord.Embed(title=f"{after.name}'s' Banner Changed", description="Before", color=discord.Color.blue())
@@ -1237,6 +1328,11 @@ async def on_guild_update(before, after):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_role_create(role):
+    if not hasattr(role.guild, 'id'):
+        return
+    else:
+        if str(role.guild.id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(role.guild.id)])
     em = discord.Embed(title=f'Role "{role.name}" Created', color=discord.Color.green())
     em.set_thumbnail(url=role.guild.icon_url)
@@ -1247,6 +1343,11 @@ async def on_guild_role_create(role):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_role_delete(role):
+    if not hasattr(role.guild, 'id'):
+        return
+    else:
+        if str(role.guild.id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(role.guild.id)])
     em = discord.Embed(title=f'Role "{role.name}" Deleted', color=discord.Color.red())
     em.set_thumbnail(url=role.guild.icon_url)
@@ -1257,6 +1358,11 @@ async def on_guild_role_delete(role):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_role_update(before, after):
+    if not hasattr(after.guild, 'id'):
+        return
+    else:
+        if str(after.guild.id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(after.guild.id)])
     valueb = ""
     valuea = ""
@@ -1495,6 +1601,11 @@ async def on_guild_role_update(before, after):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_voice_state_update(member, before, after):
+    if not hasattr(member.guild, 'id'):
+        return
+    else:
+        if str(member.guild.id) not in bot.data['logs']:
+            return
     log_chat = bot.get_channel(bot.data['logs'][str(member.guild.id)])
     status = ""
     status2 = ""
@@ -1618,6 +1729,11 @@ async def on_voice_state_update(member, before, after):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_user_update(before, after):
+    if not hasattr(after.guild, 'id'):
+        return
+    else:
+        if str(after.guild.id) not in bot.data['logs']:
+            return
     for guild in bot.data['logs']:
         log_chat = bot.get_channel(bot.data['logs'][str(guild)])
         if before.avatar != after.avatar:
@@ -1641,6 +1757,11 @@ async def on_user_update(before, after):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_guild_join(guild):
+    if not hasattr(guild, 'id'):
+        return
+    else:
+        if str(guild.id) not in bot.data['logs']:
+            return
     bot.data['logs'][str(guild.id)] = ""
 
     bot.data['widt'][str(guild.id)] = ""
