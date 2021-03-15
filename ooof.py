@@ -1595,7 +1595,8 @@ async def on_guild_role_update(before, after):
         em.add_field(name="Permissions", value=permissions)
     em.set_thumbnail(url=before.guild.icon_url)
     em.set_footer(text="ROLE ID: " + str(before.id))
-    await log_chat.send(embed=em)
+    if valuea != None or valueb != None or permissions != '':
+        await log_chat.send(embed=em)
 
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1729,11 +1730,6 @@ async def on_voice_state_update(member, before, after):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_user_update(before, after):
-    if not hasattr(after.guild, 'id'):
-        return
-    else:
-        if str(after.guild.id) not in bot.data['logs']:
-            return
     for guild in bot.data['logs']:
         log_chat = bot.get_channel(bot.data['logs'][str(guild)])
         if before.avatar != after.avatar:

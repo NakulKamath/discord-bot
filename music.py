@@ -10,8 +10,15 @@ import wavelink
 from discord.ext import commands
 
 dj_role = 'dj'
-modde = ''
+modde = 'none'
 stopped = False
+ussser = None
+ussser_url = None
+chnn = None
+qpr = {}
+qpru = {}
+i = 1
+ii = 1
 
 URL_REGEX = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
 OPTIONS = {
@@ -130,7 +137,7 @@ class Queue:
     def set_repeat_mode(self, mode):
         if mode == "none":
             self.repeat_mode = RepeatMode.NONE
-        elif mode == "1":
+        elif mode == "1" or mode == 'one':
             self.repeat_mode = RepeatMode.ONE
         elif mode == "all":
             self.repeat_mode = RepeatMode.ALL
@@ -162,20 +169,31 @@ class Player(wavelink.Player):
             pass
 
     async def add_tracks(self, ctx, tracks):
+        global ussser
+        global ussser_url
+        global qpr
+        global qpru
+        global i
         if not tracks:
             raise NoTracksFound
-
+        
         if isinstance(tracks, wavelink.TrackPlaylist):
             self.queue.add(*tracks.tracks)
         elif len(tracks) == 1:
             self.queue.add(tracks[0])
             embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Added {tracks[0].title} to the queue!")
             await ctx.send(embed=embed)
+            qpr[i] = ctx.message.author
+            qpru[i] = ctx.message.author.avatar_url
+            i = i + 1
         else:
             if (track := await self.choose_track(ctx, tracks)) is not None:
                 self.queue.add(track)
                 embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Added {track.title} to the queue!")
                 await ctx.send(embed=embed)
+                qpr[i] = ctx.message.author
+                qpru[i] = ctx.message.author.avatar_url
+                i = i + 1
 
         if not self.is_playing and not self.queue.is_empty:
             await self.start_playback()
@@ -223,6 +241,7 @@ class Player(wavelink.Player):
             if (track := self.queue.get_next_track()) is not None:
                 await self.play(track)
         except QueueIsEmpty:
+            await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"The wait for $"))
             pass
 
     async def repeat_track(self):
@@ -277,7 +296,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
                 "rest_uri": "http://127.0.0.1:2333",
                 "password": "youshallnotpass",
                 "identifier": "MAIN",
-                "region": "europe",
+                "region": "india",
             }
         }
 
@@ -292,6 +311,12 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name="connect", aliases=["join", 'c', 'j'])
     async def connect_command(self, ctx, *, channel: t.Optional[discord.VoiceChannel]):
+        if not hasattr(ctx.message.author.voice, 'channel'):
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in a voice channel!")
+            await ctx.send(embed=embed)
+            return
+        global chnn
+        chnn = ctx.message.author.voice.channel.name
         await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"Playing music for {ctx.message.author}"))
         player = self.get_player(ctx)
         channel = await player.connect(ctx, channel)
@@ -309,6 +334,15 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name="disconnect", aliases=["leave", 'l', 'd'])
     async def disconnect_command(self, ctx):
+        global chnn
+        print(chnn)
+        print(ctx.message.author.voice.channel.name)
+        if not hasattr(ctx.message.author.voice, 'channel'):
+            return
+        if chnn != ctx.message.author.voice.channel.name:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
+            await ctx.send(embed=embed)
+            return
         await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"The wait for $"))
         player = self.get_player(ctx)
         await player.teardown()
@@ -317,11 +351,21 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name="play", aliases=['add', 'start', 'p'])
     async def play_command(self, ctx, *, query: t.Optional[str]):
+        global chnn 
         player = self.get_player(ctx)
+        if not hasattr(ctx.message.author.voice, 'channel'):
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in a voice channel!")
+            await ctx.send(embed=embed)
+            return
         await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"Playing music for {ctx.message.author}"))
         if not player.is_connected:
+            chnn = ctx.message.author.voice.channel.name
             await player.connect(ctx)
-
+        if chnn != ctx.message.author.voice.channel.name:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
+            await ctx.send(embed=embed)
+            return
+        
         if query is None:
             if player.queue.is_empty:
                 raise QueueIsEmpty
@@ -348,6 +392,13 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name="pause", aliases=['halt'])
     async def pause_command(self, ctx):
+        global chnn
+        if not hasattr(ctx.message.author.voice, 'channel'):
+            return
+        if chnn != ctx.message.author.voice.channel.name:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
+            await ctx.send(embed=embed)
+            return
         player = self.get_player(ctx)
 
         if player.is_paused:
@@ -375,6 +426,19 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name="next", aliases=["skip"])
     async def next_command(self, ctx):
+        global ussser
+        global chnn
+        if not hasattr(ctx.message.author.voice, 'channel'):
+            return
+        if chnn != ctx.message.author.voice.channel.name:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
+            await ctx.send(embed=embed)
+            return
+        if ussser != ctx.message.author:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be invoker to skip!")
+            await ctx.send(embed=embed)
+            return
+
         player = self.get_player(ctx)
 
         if not player.queue.upcoming:
@@ -395,6 +459,12 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name="previous", aliases=['prev'])
     async def previous_command(self, ctx):
+        if not hasattr(ctx.message.author.voice, 'channel'):
+            return
+        if chnn != ctx.message.author.voice.channel.name:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
+            await ctx.send(embed=embed)
+            return
         player = self.get_player(ctx)
 
         if not player.queue.history:
@@ -417,6 +487,12 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     @commands.command(name="shuffle", aliases=['shu'])
     @commands.has_role(dj_role)
     async def shuffle_command(self, ctx):
+        if not hasattr(ctx.message.author.voice, 'channel'):
+            return
+        if chnn != ctx.message.author.voice.channel.name:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
+            await ctx.send(embed=embed)
+            return
         player = self.get_player(ctx)
         player.queue.shuffle()
         embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Queue shuffled!")
@@ -430,14 +506,31 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name="repeat")
     async def repeat_command(self, ctx, mode: str=None):
-        global modde
-        if mode not in ("off", "1", "all"):
-            embed = discord.Embed(description="<:cross_mark:814801897138815026> Give a mode `off`, `1` or `all` and reuse the command!")
+        if not hasattr(ctx.message.author.voice, 'channel'):
+            return
+        if chnn != ctx.message.author.voice.channel.name:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
             await ctx.send(embed=embed)
-            raise InvalidRepeatMode
+            return
+        global modde
+        if mode == None:
+            if modde == 'none':
+                mode = '1'
+                modde = '1'
+            elif modde == '1':
+                mode = 'all'
+                modde = 'all'
+            elif modde == 'all':
+                print('sus')
+                mode = 'off'
+                modde = 'none'
+        if mode != None:
+            if mode not in ("off", "1", "all"):
+                embed = discord.Embed(description="<:cross_mark:814801897138815026> Give a mode `off`, `1` or `all` and reuse the command!")
+                await ctx.send(embed=embed)
+                raise InvalidRepeatMode
         if mode == "off":
             mode = "none"
-        modde = mode
         player = self.get_player(ctx)
         player.queue.set_repeat_mode(mode)
         embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Repeat mode - `{mode}`")
@@ -445,6 +538,12 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name="queue", aliases=['q', 'que'])
     async def queue_command(self, ctx, show: t.Optional[int] = 10):
+        if not hasattr(ctx.message.author.voice, 'channel'):
+            return
+        if chnn != ctx.message.author.voice.channel.name:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
+            await ctx.send(embed=embed)
+            return
         player = self.get_player(ctx)
 
         if player.queue.is_empty:
@@ -470,10 +569,18 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
                 inline=False
             )
 
-        msg = await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
 
     @commands.command(name="now_playing", aliases=['np'])
-    async def now_playing_command(self, ctx, show: t.Optional[int] = 10):
+    async def now_playing_command(self, ctx):
+        if not hasattr(ctx.message.author.voice, 'channel'):
+            return
+        if chnn != ctx.message.author.voice.channel.name:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
+            await ctx.send(embed=embed)
+            return
+        global ussser
+        global ussser_url
         player = self.get_player(ctx)
 
         if player.queue.is_empty:
@@ -485,14 +592,14 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             timestamp=dt.datetime.utcnow()
         )
         embed.set_author(name="Query Results")
-        embed.set_footer(text=f"Requested by {ctx.author.display_name}", icon_url=ctx.author.avatar_url)
+        embed.set_footer(text=f"Requested by {ussser}", icon_url=ussser_url)
         embed.add_field(
             name="Currently playing",
             value=getattr(player.queue.current_track, "title", "No tracks currently playing."),
             inline=False
         )
 
-        msg = await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
 
     @queue_command.error
     async def queue_command_error(self, ctx, exc):
@@ -504,6 +611,49 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
                 stopped = False
             embed = discord.Embed(description=f"<:tick_mark:814801884358901770> The queue is empty!")
             await ctx.send(embed=embed)
+
+    @wavelink.WavelinkMixin.listener()
+    async def on_track_start(self, node: wavelink.node.Node, payload: wavelink.events.TrackStart):
+        global ussser
+        global ussser_url
+        global ii
+        ussser = qpr[ii]
+        ussser_url = qpru[ii]
+        if modde == 'none':
+            ii = ii + 1
+
+    @commands.command(name="seek_playing", aliases=['s'])
+    async def seek_command(self, ctx, s: str=None, m: str=None, h: str=None):
+        if m == None and h == None:
+            re.compile(r"[0-9][1-9](s)")|(r"[0-9](s)")
+            tt = re.match(s)
+            t = tt.group()
+            if t != None:
+                t = t[:-1]
+                val = int(t)*1000
+            else:
+                val = 0
+        if h == None:
+            t = re.compile(r"[0-9][1-9](s)")|(r"[0-9](s)")
+            tt = t.match(s)
+            t = tt.group()
+            if t != None:
+                t = t[:-1]
+                val = int(t)*1000
+            else:
+                val = 0
+            re.compile(r"[0-9][1-9](m)")|(r"[0-9](m)")
+            ttm = tm.match(s)
+            tm = ttm.group()
+            tm = tm[:-1]
+            if tm != None:
+                tm = tm[:-1]
+                val = val + int(tm)*60000
+            else:
+                val = val + 0
+        print(val)
+
+
 
 
 def setup(bot):
