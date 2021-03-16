@@ -14,11 +14,13 @@ modde = 'none'
 stopped = False
 ussser = None
 ussser_url = None
-chnn = None
+chnn = {}
 qpr = {}
 qpru = {}
-i = 1
-ii = 1
+votes = {}
+invite = {}
+bcid = {}
+started = False
 
 URL_REGEX = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
 OPTIONS = {
@@ -173,7 +175,6 @@ class Player(wavelink.Player):
         global ussser_url
         global qpr
         global qpru
-        global i
         if not tracks:
             raise NoTracksFound
         
@@ -183,17 +184,16 @@ class Player(wavelink.Player):
             self.queue.add(tracks[0])
             embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Added {tracks[0].title} to the queue!")
             await ctx.send(embed=embed)
-            qpr[i] = ctx.message.author
-            qpru[i] = ctx.message.author.avatar_url
-            i = i + 1
+            for track in tracks:
+                qpr[track.id] = ctx.message.author.name
+                qpru[track.id] = f"{ctx.message.author.avatar_url}"
         else:
             if (track := await self.choose_track(ctx, tracks)) is not None:
                 self.queue.add(track)
                 embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Added {track.title} to the queue!")
                 await ctx.send(embed=embed)
-                qpr[i] = ctx.message.author
-                qpru[i] = ctx.message.author.avatar_url
-                i = i + 1
+                qpr[track.id] = ctx.message.author.name
+                qpru[track.id] = f"{ctx.message.author.avatar_url}"
 
         if not self.is_playing and not self.queue.is_empty:
             await self.start_playback()
@@ -260,10 +260,14 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
-        if not member.bot and after.channel is None:
-            if not [m for m in before.channel.members if not m.bot]:
-                await self.get_player(member.guild).teardown()
-                await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"The wait for $"))
+        if not started == True:
+            return
+        global chnn
+        if str(before.channel) == chnn[str(member.guild.id)]:
+            if not member.bot:
+                if not [m for m in before.channel.members if not m.bot]:
+                    await self.get_player(member.guild).teardown()
+                    await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"The wait for $"))
 
     @wavelink.WavelinkMixin.listener()
     async def on_node_ready(self, node):
@@ -311,22 +315,29 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name="connect", aliases=["join", 'c', 'j'])
     async def connect_command(self, ctx, *, channel: t.Optional[discord.VoiceChannel]):
+        global invite
+        global started
+        started = True
         if not hasattr(ctx.message.author.voice, 'channel'):
             embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in a voice channel!")
             await ctx.send(embed=embed)
             return
         global chnn
-        chnn = ctx.message.author.voice.channel.name
+        chnn[str(ctx.guild.id)] = ctx.message.author.voice.channel.name
         await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"Playing music for {ctx.message.author}"))
         player = self.get_player(ctx)
         channel = await player.connect(ctx, channel)
         embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Connected to {channel.name}!")
+        inv = channel.create_invite()
+        invi = inv.url
+        invite[str(ctx.guild.id)] = invi
         await ctx.send(embed=embed)
 
     @connect_command.error
     async def connect_command_error(self, ctx, exc):
+        global invite
         if isinstance(exc, AlreadyConnectedToChannel):
-            embed = discord.Embed(description="<:cross_mark:814801897138815026> Already connected to a voice channel!")
+            embed = discord.Embed(description=f"<:cross_mark:814801897138815026> Already connected to a voice channel! - [Join!]({invite[str(ctx.guild.id)]})")
             await ctx.send(embed=embed)
         elif isinstance(exc, NoVoiceChannel):
             embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in a voice channel!")
@@ -335,11 +346,9 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     @commands.command(name="disconnect", aliases=["leave", 'l', 'd'])
     async def disconnect_command(self, ctx):
         global chnn
-        print(chnn)
-        print(ctx.message.author.voice.channel.name)
         if not hasattr(ctx.message.author.voice, 'channel'):
             return
-        if chnn != ctx.message.author.voice.channel.name:
+        if chnn[str(ctx.guild.id)] != ctx.message.author.voice.channel.name:
             embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
             await ctx.send(embed=embed)
             return
@@ -351,7 +360,11 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name="play", aliases=['add', 'start', 'p'])
     async def play_command(self, ctx, *, query: t.Optional[str]):
-        global chnn 
+        global votes
+        global chnn
+        global invite
+        global started
+        started = True
         player = self.get_player(ctx)
         if not hasattr(ctx.message.author.voice, 'channel'):
             embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in a voice channel!")
@@ -359,9 +372,12 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             return
         await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"Playing music for {ctx.message.author}"))
         if not player.is_connected:
-            chnn = ctx.message.author.voice.channel.name
-            await player.connect(ctx)
-        if chnn != ctx.message.author.voice.channel.name:
+            chnn[str(ctx.guild.id)] = ctx.message.author.voice.channel.name
+            channel = await player.connect(ctx)
+            inv = await channel.create_invite()
+            invi = inv.url
+            invite[str(ctx.guild.id)] = invi
+        if chnn[str(ctx.guild.id)] != ctx.message.author.voice.channel.name:
             embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
             await ctx.send(embed=embed)
             return
@@ -395,7 +411,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         global chnn
         if not hasattr(ctx.message.author.voice, 'channel'):
             return
-        if chnn != ctx.message.author.voice.channel.name:
+        if chnn[str(ctx.guild.id)] != ctx.message.author.voice.channel.name:
             embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
             await ctx.send(embed=embed)
             return
@@ -417,35 +433,51 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     @commands.command(name="stop", aliases=['clear'])
     @commands.has_role(dj_role)
     async def stop_command(self, ctx):
+        global modde
         await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"The wait for $"))
         player = self.get_player(ctx)
         player.queue.empty()
         await player.stop()
         embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Stopped!")
         await ctx.send(embed=embed)
+        modde = 'none'
 
     @commands.command(name="next", aliases=["skip"])
     async def next_command(self, ctx):
+        global dj_role
         global ussser
         global chnn
         if not hasattr(ctx.message.author.voice, 'channel'):
             return
-        if chnn != ctx.message.author.voice.channel.name:
+        if chnn[str(ctx.guild.id)] != ctx.message.author.voice.channel.name:
             embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
             await ctx.send(embed=embed)
             return
-        if ussser != ctx.message.author:
-            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be invoker to skip!")
-            await ctx.send(embed=embed)
-            return
+        if ussser != ctx.message.author.name:
+            role = discord.utils.find(lambda m: m.name == dj_role, ctx.guild.roles)
+            if role in ctx.message.author.roles:
+                pass
+            else:
+                embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be invoker to skip!")
+                await ctx.send(embed=embed)
+                return
 
         player = self.get_player(ctx)
 
         if not player.queue.upcoming:
-            raise NoMoreTracks
-
+            global modde
+            await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"The wait for $"))
+            player = self.get_player(ctx)
+            player.queue.empty()
+            await player.stop()
+            embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Stopped!")
+            await ctx.send(embed=embed)
+            modde = 'none'
+            return
+        player.queue.set_repeat_mode('off')
         await player.stop()
         embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Playing the next track!")
+        player.queue.set_repeat_mode(modde)
         await ctx.send(embed=embed)
 
     @next_command.error
@@ -459,9 +491,10 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name="previous", aliases=['prev'])
     async def previous_command(self, ctx):
+        global chnn
         if not hasattr(ctx.message.author.voice, 'channel'):
             return
-        if chnn != ctx.message.author.voice.channel.name:
+        if chnn[str(ctx.guild.id)] != ctx.message.author.voice.channel.name:
             embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
             await ctx.send(embed=embed)
             return
@@ -487,9 +520,10 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     @commands.command(name="shuffle", aliases=['shu'])
     @commands.has_role(dj_role)
     async def shuffle_command(self, ctx):
+        global chnn
         if not hasattr(ctx.message.author.voice, 'channel'):
             return
-        if chnn != ctx.message.author.voice.channel.name:
+        if chnn[str(ctx.guild.id)] != ctx.message.author.voice.channel.name:
             embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
             await ctx.send(embed=embed)
             return
@@ -504,11 +538,12 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             embed = discord.Embed(description="<:cross_mark:814801897138815026> The queue is empty!")
             await ctx.send(embed=embed)
 
-    @commands.command(name="repeat")
+    @commands.command(name="repeat", aliases=['loop'])
     async def repeat_command(self, ctx, mode: str=None):
+        global chnn
         if not hasattr(ctx.message.author.voice, 'channel'):
             return
-        if chnn != ctx.message.author.voice.channel.name:
+        if chnn[str(ctx.guild.id)] != ctx.message.author.voice.channel.name:
             embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
             await ctx.send(embed=embed)
             return
@@ -521,7 +556,6 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
                 mode = 'all'
                 modde = 'all'
             elif modde == 'all':
-                print('sus')
                 mode = 'off'
                 modde = 'none'
         if mode != None:
@@ -538,9 +572,10 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name="queue", aliases=['q', 'que'])
     async def queue_command(self, ctx, show: t.Optional[int] = 10):
+        global chnn
         if not hasattr(ctx.message.author.voice, 'channel'):
             return
-        if chnn != ctx.message.author.voice.channel.name:
+        if chnn[str(ctx.guild.id)] != ctx.message.author.voice.channel.name:
             embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
             await ctx.send(embed=embed)
             return
@@ -573,15 +608,14 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name="now_playing", aliases=['np'])
     async def now_playing_command(self, ctx):
-        if not hasattr(ctx.message.author.voice, 'channel'):
-            return
-        if chnn != ctx.message.author.voice.channel.name:
-            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
-            await ctx.send(embed=embed)
-            return
+        global chnn
         global ussser
         global ussser_url
         player = self.get_player(ctx)
+        if not hasattr(player.current, 'length'):
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> Not playing a track at the moment!")
+            await ctx.send(embed=embed)
+            return
 
         if player.queue.is_empty:
             raise QueueIsEmpty
@@ -593,17 +627,62 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         )
         embed.set_author(name="Query Results")
         embed.set_footer(text=f"Requested by {ussser}", icon_url=ussser_url)
+
+        m, s = divmod(int(player.position)//1000, 60)
+        h, m = divmod(m, 60)
+        if int(h) == 0 and int(m) == 0:
+            if len(str(s)) == 1:
+                s = "0"+str(s)
+            pos = f"0:0:{s}"
+        elif int(h) == 0 and int(m) != 0:
+            if len(str(s)) == 1:
+                s = "0"+str(s)
+            if len(str(m)) == 1:
+                m = "0"+str(m)
+            pos = f"0:{m}:{s}"
+        else:
+            if len(str(s)) == 1:
+                s = "0"+str(s)
+            if len(str(m)) == 1:
+                m = "0"+str(m)
+            pos = f"{h}:{m}:{s}"
+        
+        m, s = divmod(int(player.current.length)//1000, 60)
+        h, m = divmod(m, 60)
+        if int(h) == 0 and int(m) == 0:
+            if len(str(s)) == 1:
+                s = "0"+str(s)
+            clen = f"0:0:{s}"
+        elif int(h) == 0 and int(m) != 0:
+            if len(str(s)) == 1:
+                s = "0"+str(s)
+            if len(str(m)) == 1:
+                m = "0"+str(m)
+            clen = f"0:{m}:{s}"
+        else:
+            if len(str(s)) == 1:
+                s = "0"+str(s)
+            if len(str(m)) == 1:
+                m = "0"+str(m)
+            clen = f"{h}:{m}:{s}"
+
         embed.add_field(
             name="Currently playing",
             value=getattr(player.queue.current_track, "title", "No tracks currently playing."),
             inline=False
         )
+        val1 = int(round(player.position/player.current.length*100, 2))
+        val2 = 100-int(round(player.position/player.current.length*100, 2))
+        if val1 > 0:
+            vall='<| '+f"[{'·'*val1}](https://discord.gg/jDMYEV5)"
+        else:
+            vall='<| '+"·"*val1
+        embed.add_field(name=f"**Time** - `{pos}/{clen}`", value=vall + ' :radio_button: ' + "·"*val2+' |>')
 
         await ctx.send(embed=embed)
 
     @queue_command.error
     async def queue_command_error(self, ctx, exc):
-        print('ran')
         global stopped
         if isinstance(exc, QueueIsEmpty):
             if stopped == True:
@@ -616,43 +695,196 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     async def on_track_start(self, node: wavelink.node.Node, payload: wavelink.events.TrackStart):
         global ussser
         global ussser_url
-        global ii
-        ussser = qpr[ii]
-        ussser_url = qpru[ii]
-        if modde == 'none':
-            ii = ii + 1
+        global votes
+        ussser = qpr[str(payload.track)]
+        ussser_url = qpru[str(payload.track)]
+        votes[str(payload.player.guild_id)] = 0
+    
+    @commands.command(name="restart", aliases=["r"])
+    async def restart_command(self, ctx):
+        global dj_role
+        global ussser
+        global chnn
+        if not hasattr(ctx.message.author.voice, 'channel'):
+            return
+        if chnn[str(ctx.guild.id)] != ctx.message.author.voice.channel.name:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
+            await ctx.send(embed=embed)
+            return
+        if ussser != ctx.message.author.name:
+            role = discord.utils.find(lambda m: m.name == dj_role, ctx.guild.roles)
+            if role in ctx.message.author.roles:
+                pass
+            else:
+                embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be invoker to restart!")
+                await ctx.send(embed=embed)
+                return
+        player = self.get_player(ctx) 
+        await player.seek(0)
+        embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Restarted the track!")
+        await ctx.send(embed=embed)
 
-    @commands.command(name="seek_playing", aliases=['s'])
+    @commands.command(name="votenext", aliases=["voteskip", 'vs'])
+    async def votenext_command(self, ctx):
+        global dj_role
+        global ussser
+        global chnn
+        global votes
+        if str(ctx.guild.id) not in votes.keys():
+            votes[str(ctx.guild.id)] = 0
+        if not hasattr(ctx.message.author.voice, 'channel'):
+            return
+        if chnn[str(ctx.guild.id)] != ctx.message.author.voice.channel.name:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
+            await ctx.send(embed=embed)
+            return
+
+        player = self.get_player(ctx)
+        vcn = len(ctx.message.author.voice.channel.members) - 1
+        votes[str(ctx.guild.id)] = votes[str(ctx.guild.id)] + 1
+        vr = round(vcn/2)
+        if vr == 0:
+            vr = 1
+        embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Added your vote - `{votes[str(ctx.guild.id)]}/{vr}` votes!")
+        await ctx.send(embed=embed)
+        if votes[str(ctx.guild.id)] >= vr:
+            if not player.queue.upcoming:
+                global modde
+                await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"The wait for $"))
+                player = self.get_player(ctx)
+                player.queue.empty()
+                await player.stop()
+                embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Stopped!")
+                await ctx.send(embed=embed)
+                modde = 'none'
+                votes[str(ctx.guild.id)] = 0
+                return
+            player.queue.set_repeat_mode('off')
+            await player.stop()
+            embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Playing the next track!")
+            await ctx.send(embed=embed)
+            player.queue.set_repeat_mode(modde)
+            votes[str(ctx.guild.id)] = 0
+
+    
+    @commands.command(name="seek", aliases=['s'])
     async def seek_command(self, ctx, s: str=None, m: str=None, h: str=None):
-        if m == None and h == None:
-            re.compile(r"[0-9][1-9](s)")|(r"[0-9](s)")
-            tt = re.match(s)
-            t = tt.group()
-            if t != None:
-                t = t[:-1]
-                val = int(t)*1000
-            else:
-                val = 0
-        if h == None:
-            t = re.compile(r"[0-9][1-9](s)")|(r"[0-9](s)")
-            tt = t.match(s)
-            t = tt.group()
-            if t != None:
-                t = t[:-1]
-                val = int(t)*1000
-            else:
-                val = 0
-            re.compile(r"[0-9][1-9](m)")|(r"[0-9](m)")
-            ttm = tm.match(s)
+        player = self.get_player(ctx) 
+        if not hasattr(player.current, 'length'):
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> Not playing a track at the moment!")
+            await ctx.send(embed=embed)
+            return
+        val = 0
+        t = re.compile(r"([0-9][0-9](s|m|h))|([0-9](s|m|h))")
+        if s != None and m == None and h == None:
+            tts = t.match(s)
+            if tts == None:
+                embed = discord.Embed(description="<:cross_mark:814801897138815026> Use the syntax `XXh XXm XXs`!")
+                await ctx.send(embed=embed)
+                return
+            ts = tts.group()
+            if ts[-1] == 's':
+                ts = ts[:-1]
+                val = val + int(ts)*1000
+            if ts[-1] == 'm':
+                ts = ts[:-1]
+                val = val + int(ts)*60000
+            if ts[-1] == 'h':
+                ts = ts[:-1]
+                val = val + int(ts)*3600000
+        elif s != None and m != None and h == None:
+            tts = t.match(s)
+            if tts == None:
+                embed = discord.Embed(description="<:cross_mark:814801897138815026> Use the syntax `XXh XXm XXs`!")
+                await ctx.send(embed=embed)
+                return
+            ts = tts.group()
+            if ts[-1] == 's':
+                ts = ts[:-1]
+                val = val + int(ts)*1000
+            if ts[-1] == 'm':
+                ts = ts[:-1]
+                val = val + int(ts)*60000
+            if ts[-1] == 'h':
+                ts = ts[:-1]
+                val = val + int(ts)*3600000
+            ttm = t.match(m)
+            if ttm == None:
+                embed = discord.Embed(description="<:cross_mark:814801897138815026> Use the syntax `XXh XXm XXs`!")
+                await ctx.send(embed=embed)
+                return
             tm = ttm.group()
-            tm = tm[:-1]
-            if tm != None:
+            if tm[-1] == 's':
+                tm = tm[:-1]
+                val = val + int(tm)*1000
+            if tm[-1] == 'm':
                 tm = tm[:-1]
                 val = val + int(tm)*60000
-            else:
-                val = val + 0
-        print(val)
-
+            if tm[-1] == 'h':
+                tm = tm[:-1]
+                val = val + int(tm)*3600000
+        elif s != None and m != None and h != None:
+            tts = t.match(s)
+            if tts == None:
+                embed = discord.Embed(description="<:cross_mark:814801897138815026> Use the syntax `XXh XXm XXs`!")
+                await ctx.send(embed=embed)
+                return
+            ts = tts.group()
+            if ts[-1] == 's':
+                ts = ts[:-1]
+                val = val + int(ts)*1000
+            if ts[-1] == 'm':
+                ts = ts[:-1]
+                val = val + int(ts)*60000
+            if ts[-1] == 'h':
+                ts = ts[:-1]
+                val = val + int(ts)*3600000
+            ttm = t.match(m)
+            if ttm == None:
+                embed = discord.Embed(description="<:cross_mark:814801897138815026> Use the syntax `XXh XXm XXs`!")
+                await ctx.send(embed=embed)
+                return
+            tm = ttm.group()
+            if tm[-1] == 's':
+                tm = tm[:-1]
+                val = val + int(tm)*1000
+            if tm[-1] == 'm':
+                tm = tm[:-1]
+                val = val + int(tm)*60000
+            if tm[-1] == 'h':
+                tm = tm[:-1]
+                val = val + int(tm)*3600000
+            tth = t.match(h)
+            if tth == None:
+                embed = discord.Embed(description="<:cross_mark:814801897138815026> Use the syntax `XXh XXm XXs`!")
+                await ctx.send(embed=embed)
+                return
+            th = tth.group()
+            if th[-1] == 's':
+                th = th[:-1]
+                val = val + int(th)*1000
+            if th[-1] == 'm':
+                th = th[:-1]
+                val = val + int(th)*60000
+            if th[-1] == 'h':
+                th = th[:-1]
+                val = val + int(th)*3600000
+        if val > player.current.length:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You cannot seek past the track's length!")
+            await ctx.send(embed=embed)
+            return
+        await player.seek(val)
+        m, s = divmod(val//1000, 60)
+        h, m = divmod(m, 60)
+        if int(h) == 0 and int(m) == 0:
+            embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Seeked to - {s}s!")
+            await ctx.send(embed=embed)
+        elif int(h) == 0 and int(m) != 0:
+            embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Seeked to - {m}m {s}s!")
+            await ctx.send(embed=embed)
+        else:
+            embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Seeked to - {h}h {m}m {s}s!")
+            await ctx.send(embed=embed)
 
 
 
