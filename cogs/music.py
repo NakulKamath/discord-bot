@@ -109,6 +109,9 @@ class Queue:
     def add(self, *args):
         self._queue.extend(args)
 
+    def remove(self, *args):
+        self._queue.remove(args)
+
     def get_next_track(self):
         global stopped
         if not self._queue:
@@ -671,13 +674,13 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             value=getattr(player.queue.current_track, "title", "No tracks currently playing."),
             inline=False
         )
-        val1 = int(round(player.position/player.current.length*100, 2))
-        val2 = 100-int(round(player.position/player.current.length*100, 2))
+        val1 = int(round(player.position/player.current.length*25))
+        val2 = 25-int(round(player.position/player.current.length*25))
         if val1 > 0:
-            vall='<| '+f"[{'·'*val1}](https://discord.gg/jDMYEV5)"
+            vall=f"[{'▬'*val1}](https://discord.gg/jDMYEV5)"
         else:
-            vall='<| '+"·"*val1
-        embed.add_field(name=f"**Time** - `{pos}/{clen}`", value=vall + ' :radio_button: ' + "·"*val2+' |>')
+            vall="▬"*val1
+        embed.add_field(name=f"**Time** - `{pos}/{clen}`", value=vall + ' :radio_button: ' + "▬"*val2)
 
         await ctx.send(embed=embed)
 

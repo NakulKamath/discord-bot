@@ -8,13 +8,16 @@ import os
 
 bot = commands.Bot(command_prefix="$", intents=discord.Intents.all(), case_insensitive=True)
 
-with open(r"C:\Users\nakul\Documents\GitHub\mybot\py.json", 'r') as f:
+with open(r"C:\Users\nakul\Documents\GitHub\mybot\jsons\py.json", 'r') as f:
     bot.data = json.load(f)
+
+with open(r"C:\Users\nakul\Documents\GitHub\mybot\jsons\emoji.json", 'r') as f:
+    bot.emoji = json.load(f)
 
 async def save():
     await bot.wait_until_ready()
     while not bot.is_closed():
-        with open(r"C:\Users\nakul\Documents\GitHub\mybot\py.json", 'w') as f:
+        with open(r"C:\Users\nakul\Documents\GitHub\mybot\jsons\py.json", 'w') as f:
             json.dump(bot.data, f, indent=4)
 
         await asyncio.sleep(1)
@@ -27,6 +30,30 @@ bot.TICK_MARK = "<:tick_mark:814801884358901770>"
 bot.CROSS_MARK = "<:cross_mark:814801897138815026>"
 ban_reason = ""
 kicks = False
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.command()
+async def trail(context, e: str or discord.Emoji=None):
+    print(type(e))
+    print(type(str(e)))
+    if e not in bot.emoji.values():
+        if type(e) == discord.Emoji:
+            if context.message.author.id not in bot.data['trail']:
+                bot.data['trail'][context.message.author.id] = {}
+            bot.data['trail'][context.message.author.id]['emj'] = str(e)
+            bot.data['trail'][context.message.author.id]['tog'] = True
+        else:
+            em = discord.Embed(description=f"{bot.CROSS_MARK} Please use a valid emoji!")
+            await context.send(embed=em)
+    else:
+        if context.message.author.id not in bot.data['trail']:
+            bot.data['trail'][context.message.author.id] = {}
+        bot.data['trail'][context.message.author.id]['emj'] = e
+        bot.data['trail'][context.message.author.id]['tog'] = True
+
+
+    await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -749,10 +776,10 @@ async def purge(context, limit=5, member: discord.Member=None):
     await save()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command(aliases=["a", "av"])
-async def avatar(context, member: discord.Member=None):
+async def avatar(context, member: discord.User=None):
     if member == None:
         member = context.message.author 
-    em = discord.Embed(title="Avatar", color=discord.Color.blue(), timestamp=datetime.utcnow())
+    em = discord.Embed(description=f"[Avatar]({member.avatar_url})", color=discord.Color.blue(), timestamp=datetime.utcnow())
     em.set_image(url=member.avatar_url)
     em.set_author(name=str(member), icon_url=member.avatar_url)
     em.set_footer(text="USER ID: " + str(member.id))
@@ -1317,14 +1344,14 @@ async def on_raw_reaction_add(payload):
             bot.data['wt']['time']['votes']['65'] = bot.data['wt']['time']['votes']['65'] + 1
             emj = "65"
         if str(emoji) == '🕖':
-            bot.data['wt']['time']['votes']['70'] = bot.data['wt']['time']['votes']['7'] + 1
-            emj = "7"
+            bot.data['wt']['time']['votes']['70'] = bot.data['wt']['time']['votes']['70'] + 1
+            emj = "70"
         if str(emoji) == '🕢':
             bot.data['wt']['time']['votes']['75'] = bot.data['wt']['time']['votes']['75'] + 1
             emj = "75"
         if str(emoji) == '🕗':
-            bot.data['wt']['time']['votes']['80'] = bot.data['wt']['time']['votes']['8'] + 1
-            emj = "8"
+            bot.data['wt']['time']['votes']['80'] = bot.data['wt']['time']['votes']['80'] + 1
+            emj = "80"
         if str(emoji) == '🕣':
             bot.data['wt']['time']['votes']['85'] = bot.data['wt']['time']['votes']['85'] + 1
             emj = "85"
@@ -1934,24 +1961,28 @@ async def on_voice_state_update(member, before, after):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.event
 async def on_user_update(before, after):
-    for guild in bot.data['logs'] != "":
-        log_chat = bot.get_channel(bot.data['logs'][str(guild)])
-        if before.avatar != after.avatar:
-            emold = discord.Embed(title=f"{before.display_name}'s Avatar Updated", description="Before", color=discord.Color.blue(), timestamp=datetime.utcnow())
-            emold.set_image(url=before.avatar_url)
-            emold.set_footer(text="USER ID: " + str(before.id))
-            await log_chat.send(embed=emold)
-            emnew = discord.Embed(title=f"{before.display_name}'s Avatar Updated", description="After", color=discord.Color.blue(), timestamp=datetime.utcnow())
-            emnew.set_image(url=after.avatar_url)
-            emnew.set_footer(text="USER ID: " + str(before.id))
-            await log_chat.send(embed=emnew)
-        else:
-            em = discord.Embed(title=f"{before.display_name}'s Name/Discriminator Updated", color=discord.Color.blue(), timestamp=datetime.utcnow())
-            em.add_field(name="Before", value=f"`{before.name}#{before.discriminator}`", inline=False)
-            em.add_field(name="After", value=f"`{after.name}#{after.discriminator}`", inline=False)
-            em.set_footer(text="USER ID: " + str(before.id))
-            em.set_thumbnail(url=before.avatar_url)
-            await log_chat.send(embed=em)
+    for guild in bot.data['logs']:
+        if bot.data['logs'][guild] != "":
+            log_chat = bot.get_channel(bot.data['logs'][str(guild)])
+            if before.avatar != after.avatar:
+                emold = discord.Embed(title=f"{before.display_name}'s Avatar Updated", description=f"[Before]({before.avatar_url})", color=discord.Color.blue(), timestamp=datetime.utcnow())
+                avb = before.avatar_url_as(size=512)
+                emold.set_image(url=avb)
+                emold.set_footer(text="USER ID: " + str(before.id))
+                await log_chat.send(embed=emold)
+                await asyncio.sleep(2)
+                emnew = discord.Embed(title=f"{before.display_name}'s Avatar Updated", description=f"[After]({after.avatar_url})", color=discord.Color.blue(), timestamp=datetime.utcnow())
+                ava = after.avatar_url_as(size=512)
+                emnew.set_image(url=ava)
+                emnew.set_footer(text="USER ID: " + str(before.id))
+                await log_chat.send(embed=emnew)
+            else:
+                em = discord.Embed(title=f"{before.display_name}'s Name/Discriminator Updated", color=discord.Color.blue(), timestamp=datetime.utcnow())
+                em.add_field(name="Before", value=f"`{before.name}#{before.discriminator}`", inline=False)
+                em.add_field(name="After", value=f"`{after.name}#{after.discriminator}`", inline=False)
+                em.set_footer(text="USER ID: " + str(before.id))
+                em.set_thumbnail(url=before.avatar_url)
+                await log_chat.send(embed=em)
 
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1970,9 +2001,9 @@ async def on_guild_join(guild):
     bot.data['suggest']['val'][str(guild.id)] = {}
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-for file in os.listdir('./'):
-    if file.endswith('music.py'):
-        bot.load_extension(f"{file[:-3]}")
+for file in os.listdir('./cogs'):
+    if file.endswith('.py'):
+        bot.load_extension(f"cogs.{file[:-3]}")
 
 
 
