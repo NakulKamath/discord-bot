@@ -294,6 +294,23 @@ async def sett(context, channel: discord.TextChannel=None):
         await asyncio.sleep(5)
         await context.message.delete()
         await mes.delete()
+        await context.guild.create_category_channel(name='tickets')
+
+    await save()
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.command(aliases=['setticketadmin'])
+@commands.has_permissions(manage_messages=True)
+async def setta(context, role: discord.Role=None):
+    if role == None:
+        em = discord.Embed(description=f"{bot.CROSS_MARK} You must provide a role for this command!")
+        await context.send(embed=em)
+    else:
+        bot.data['ticket']['staff'][str(context.guild.id)] = str(role.id)
+        em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully set staff role as - {role.mention}")
+        mes = await context.send(embed=em)
+        await asyncio.sleep(5)
+        await context.message.delete()
+        await mes.delete()
 
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -313,6 +330,7 @@ async def resets(context):
     if msg.content.upper() == 'YES':
         bot.data['suggest']['count'][str(context.guild.id)] = 1
         bot.data['suggest']['val'][str(context.guild.id)] = {}
+
         em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully reset suggestion count!")
         mes = await context.send(embed=em)
         await context.message.delete()
@@ -349,7 +367,6 @@ async def resett(context):
         bot.data['ticket']['count'][str(context.guild.id)] = 1
         bot.data['ticket']['val'][str(context.guild.id)] = {}
         bot.data['ticket']['msg'][str(context.guild.id)] = ""
-        bot.data['ticket']['op'][str(context.guild.id)] = {}
         em = discord.Embed(description=f"{bot.TICK_MARK} Succesfully reset ticket count!")
         mes = await context.send(embed=em)
         await context.message.delete()
@@ -386,49 +403,6 @@ async def on_message(msg):
     except AttributeError:
         # It is a DM channel message - It has no guild
         pass
-#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # INVITE BLOCKER
-    if msg.content.find("discord.gg") != -1 and not isinstance(msg.channel, discord.channel.DMChannel):
-        if msg.author == bot.user:
-            return
-        # if message has discord.gg type invite
-        ind = msg.content.find("discord.gg")
-        if msg.content[ind + len("discord.gg"):] == "/jDMYEV5":
-            # if the message is an invite for The Matrix, ignore it.
-            pass
-        else:
-            # Delete the message since invite has been found
-            em = discord.Embed(description=f"{bot.CROSS_MARK}  You can not send invite links!")
-            await msg.channel.send(embed=em) 
-            await chn.send(f"{msg.author.mention} | {msg.author.id} did a invite in {msg.channel}.")
-            await msg.delete()
-            return
-    elif msg.content.find("discordapp.com/invite") != -1 and not isinstance(msg.channel, discord.channel.DMChannel):
-        # if message has discordapp.com/invite type invite
-        ind = msg.content.find("discordapp.com/invite")
-        if msg.content[ind + len("discordapp.com/invite"):] == "/jDMYEV5":
-            # if the message is an invite for The Matrix, ignore it.
-            pass
-        else:
-            # Delete the message since invite has been found
-            em = discord.Embed(description=f"{bot.CROSS_MARK}  You can not send invite links!")
-            await msg.channel.send(embed=em) 
-            await chn.send(f"{msg.author.mention} | {msg.author.id} did a invite in {msg.channel}.")
-            await msg.delete()
-            return
-    elif msg.content.find("discord.com/invite") != -1 and not isinstance(msg.channel, discord.channel.DMChannel):
-        # if message has discord.com/invite type invite
-        ind = msg.content.find("discord.com/invite")
-        if msg.content[ind + len("discord.com/invite"):] == "/jDMYEV5":
-            # if the message is an invite for The Matrix, ignore it.
-            pass
-        else:
-            # Delete the message since invite has been found
-            em = discord.Embed(description=f"{bot.CROSS_MARK}  You can not send invite links!")
-            await msg.channel.send(embed=em) 
-            await chn.send(f"{msg.author.mention} | {msg.author.id} did a invite in {msg.channel}.")
-            await msg.delete()
-            return
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # TICKET LOGGER
     try:
@@ -689,18 +663,24 @@ async def serverinfo(context):
     channelCount = str(len(context.guild.channels))
     textCount = str(len(context.guild.text_channels))
     voiceCount = str(len(context.guild.voice_channels))
+    catcount = str(len(context.guild.categories))
     icon = str(context.guild.icon_url)  
     em = discord.Embed(title=name + " Server Information",color=discord.Color.blue(), timestamp=datetime.utcnow())
     em.set_thumbnail(url=icon)
     em.add_field(name="Owner", value=owner, inline=True)
     em.add_field(name="Level", value=f"{context.guild.premium_tier} ({context.guild.premium_subscription_count}/30)", inline=True)
-    em.add_field(name="The Oracle", value="<:tick_mark:814801884358901770> True", inline=True)
+    em.add_field(name="Pewpie Bot", value="<:tick_mark:814801884358901770> True", inline=True)
     em.add_field(name="Member Count", value=memberCount, inline=True)
     em.add_field(name="Role Count", value=roleCount, inline=True)
-    em.add_field(name="Channel Count", value=f"{channelCount} (<:text:812696450684551199>{textCount}, <:voice:812696440114774096>{voiceCount})", inline=True)
-    em.add_field(name="Rules", value=f"{context.guild.rules_channel.mention}", inline=True)
-    em.add_field(name="Moderation", value=f"[Click here!](https://discord.com/channels/297301054930944011/745958042486702123/812302504330526741)", inline=True)
-    em.add_field(name="Leveling", value=f"[Click here!](https://discord.com/channels/297301054930944011/745958042486702123/747274838900736040)", inline=True)
+    em.add_field(name="Channel Count", value=f"{channelCount} (<:text:819265166231339008> {textCount}, <:voice:819265155870228551> {voiceCount})\nCategories - {catcount}", inline=True)
+    if hasattr(context.guild.rules_channel, "mention"):
+        em.add_field(name="Rules", value=f"{context.guild.rules_channel.mention}", inline=True)
+    if bot.data['suggest']['chn'][str(context.guild.id)] != "":
+        chn = bot.get_channel(bot.data['suggest']['chn'][str(context.guild.id)])
+        em.add_field(name="Suggestions channel", value=f"{chn.mention}", inline=True)
+    if bot.data['ticket']['chn'][str(context.guild.id)] != "":
+        chn = bot.get_channel(bot.data['ticket']['chn'][str(context.guild.id)])
+        em.add_field(name="Ticketing channel", value=f"{chn.mention}", inline=True)
     em.set_image(url=context.guild.banner_url)
     em.set_footer(text="Server ID : " + id)
     await context.send(embed=em)
@@ -868,13 +848,14 @@ async def msg1():
     await mes.add_reaction("🏸")
     await mes.add_reaction("🏏")
     await mes.add_reaction("🏓")
+    await mes.add_reaction(bot.CROSS_MARK)
     bot.data['wt']['sport']['id'] = mes.id
     await save()
 
 @msg1.before_loop
 async def before_msg1():
     for _ in range(60*60*24):
-        if datetime.now().hour == 22 and datetime.now().minute == 0:
+        if datetime.now().hour == 10 and datetime.now().minute == 0:
             return
         await asyncio.sleep(1)
 
@@ -902,8 +883,8 @@ async def msg2():
             if 'tt' in sport:
                 sport = sport.replace('tt', ':ping_pong: Table tennis')
             sport = sport[:-1]
-    em = discord.Embed(title="Sport for tomorrow!", description=f"The sport picked for today is - {sport} with {val} votes!")
-    mssg = await chn.send(f"{ping} - {str(len(bot.data['wt']['sport']['votes'].keys()))}", embed=em)
+    em = discord.Embed(title="Sport for Today!", description=f"The sport picked for today is - {sport} with {val} votes!")
+    mssg = await chn.send(f"{ping} - {str(len(bot.data['wt']['sport']['reactants'].keys()))}", embed=em)
     bot.data['wt']['sport']['id2'] = mssg.id
 
 
@@ -944,13 +925,14 @@ async def msg3():
     await mes.add_reaction("🕢")
     await mes.add_reaction("🕗")
     await mes.add_reaction("🕣")
+    await mes.add_reaction(bot.CROSS_MARK)
     bot.data['wt']['time']['id'] = mes.id
     await save()
 
 @msg3.before_loop
 async def before_msg3():
     for _ in range(60*60*24):
-        if datetime.now().hour == 22 and datetime.now().minute == 1:
+        if datetime.now().hour == 10 and datetime.now().minute == 1:
             return
         await asyncio.sleep(1)
 
@@ -967,19 +949,19 @@ async def msg4():
     for vote in bot.data['wt']['time']['votes'].keys():
         if bot.data['wt']['time']['votes'][vote] == val:
             time += vote + "/"
-            if '60' in time:
-                time = time.replace('65', ':clock630: 6:30')
             if '65' in time:
-                time = time.replace('70', ':clock7: 7:00')
+                time = time.replace('65', ':clock630: 6:30')
             if '70' in time:
-                time = time.replace('75', ':clock730: 7:30')
+                time = time.replace('70', ':clock7: 7:00')
             if '75' in time:
-                time = time.replace('80', ':clock8: 8:00')
+                time = time.replace('75', ':clock730: 7:30')
             if '80' in time:
+                time = time.replace('80', ':clock8: 8:00')
+            if '85' in time:
                 time = time.replace('85', ':clock830: 8:30')
-            time = time[:-1]
-    em = discord.Embed(title="Time for tomorrow!", description=f"The time picked for today is - {time} with {val} votes!")
-    mssg = await chn.send(f"{ping} - {str(len(bot.data['wt']['time']['votes'].keys()))}", embed=em)
+    time = time[:-1]
+    em = discord.Embed(title="Time for today!", description=f"The time picked for today is - {time} with {val} votes!")
+    mssg = await chn.send(f"{ping} - {str(len(bot.data['wt']['time']['reactants'].keys()))}", embed=em)
     bot.data['wt']['time']['id2'] = mssg.id
 
 
@@ -1231,7 +1213,7 @@ async def on_guild_channel_create(channel):
             return
     log_chat = bot.get_channel(bot.data['logs'][str(channel.guild.id)])
     em = discord.Embed(title=f"Channel Created - #{channel}", color=discord.Color.green(), timestamp=datetime.utcnow())
-    em.add_field(name="Catrgory", value=f"`{channel.category}`")
+    em.add_field(name="Category", value=f"`{channel.category}`")
     em.set_thumbnail(url=channel.guild.icon_url)
     em.set_footer(text="CHANNEL ID: " + str(channel.id))
     await log_chat.send(embed=em)
@@ -1247,7 +1229,7 @@ async def on_guild_channel_delete(channel):
             return
     log_chat = bot.get_channel(bot.data['logs'][str(channel.guild.id)])
     em = discord.Embed(title=f"Channel Deleted - #{channel}", color=discord.Color.red(), timestamp=datetime.utcnow())
-    em.add_field(name="Catrgory", value=f"`{channel.category}`")
+    em.add_field(name="Category", value=f"`{channel.category}`")
     em.set_thumbnail(url=channel.guild.icon_url)
     em.set_footer(text="CHANNEL ID: " + str(channel.id))
     await log_chat.send(embed=em)
@@ -1306,9 +1288,14 @@ async def on_raw_reaction_add(payload):
             memm = await channel.send(embed=em)
         overwrites = {
         guild.default_role: discord.PermissionOverwrite(read_messages=False),
-        member: discord.PermissionOverwrite(read_messages=True)}
+        member: discord.PermissionOverwrite(read_messages=True),
+        member.bot: discord.PermissionOverwrite(read_messages=True)
+        }
+        if int(bot.data['ticket']['staff'][str(guild.id)]) != '':
+            role = discord.utils.find(lambda m: m.id==int(bot.data['ticket']['staff'][str(guild.id)]))
+            overwrites += {role: discord.PermissionOverwrite(read_messages=True)}
         chn = await guild.create_text_channel(f"#{bot.data['ticket']['count'][str(guild.id)]}-{member.name}", overwrites=overwrites)
-        em = discord.Embed(title=f"Ticket #{bot.data['ticket']['count'][str(guild.id)]}", timestamp=datetime.utcnow())
+        em = discord.Embed(title=f"Ticket #{bot.data['ticket']['count'][str(guild.id)]}", timestamp=datetime.utcnow(), category='tickets')
         em.add_field(name='Creator', value=member.mention)
         await chn.send(embed=em)
         await message.remove_reaction(emoji, member)
@@ -1334,6 +1321,12 @@ async def on_raw_reaction_add(payload):
         if str(emoji) == '🏓':
             bot.data['wt']['sport']['votes']['tt'] = bot.data['wt']['sport']['votes']['tt'] + 1
             emj = "tt"
+        if str(emoji) == bot.CROSS_MARK:
+            if '<@'+str(member.id)+'>' in bot.data['wt']['sport']['reactants']:
+                em = bot.data['wt']['sport']['reactants']['<@'+str(member.id)+'>']
+                bot.data['wt']['sport']['votes'][em] = bot.data['wt']['sport']['votes'][em] - 1
+                del bot.data['wt']['sport']['reactants']['<@'+str(member.id)+'>']
+            return
         if '<@'+str(member.id)+'>' in bot.data['wt']['sport']['reactants']:
             em = bot.data['wt']['sport']['reactants']['<@'+str(member.id)+'>']
             bot.data['wt']['sport']['votes'][em] = bot.data['wt']['sport']['votes'][em] - 1
@@ -1355,6 +1348,12 @@ async def on_raw_reaction_add(payload):
         if str(emoji) == '🕣':
             bot.data['wt']['time']['votes']['85'] = bot.data['wt']['time']['votes']['85'] + 1
             emj = "85"
+        if str(emoji) == bot.CROSS_MARK:
+            if '<@'+str(member.id)+'>' in bot.data['wt']['time']['reactants'] != "":
+                em = bot.data['wt']['time']['reactants']['<@'+str(member.id)+'>']
+                bot.data['wt']['time']['votes'][em] = bot.data['wt']['time']['votes'][em] - 1
+                del bot.data['wt']['time']['reactants']['<@'+str(member.id)+'>']
+            return
         if '<@'+str(member.id)+'>' in bot.data['wt']['time']['reactants']:
             em = bot.data['wt']['time']['reactants']['<@'+str(member.id)+'>']
             bot.data['wt']['time']['votes'][em] = bot.data['wt']['time']['votes'][em] - 1
@@ -1962,27 +1961,30 @@ async def on_voice_state_update(member, before, after):
 @bot.event
 async def on_user_update(before, after):
     for guild in bot.data['logs']:
-        if bot.data['logs'][guild] != "":
-            log_chat = bot.get_channel(bot.data['logs'][str(guild)])
-            if before.avatar != after.avatar:
-                emold = discord.Embed(title=f"{before.display_name}'s Avatar Updated", description=f"[Before]({before.avatar_url})", color=discord.Color.blue(), timestamp=datetime.utcnow())
-                avb = before.avatar_url_as(size=512)
-                emold.set_image(url=avb)
-                emold.set_footer(text="USER ID: " + str(before.id))
-                await log_chat.send(embed=emold)
-                await asyncio.sleep(2)
-                emnew = discord.Embed(title=f"{before.display_name}'s Avatar Updated", description=f"[After]({after.avatar_url})", color=discord.Color.blue(), timestamp=datetime.utcnow())
-                ava = after.avatar_url_as(size=512)
-                emnew.set_image(url=ava)
-                emnew.set_footer(text="USER ID: " + str(before.id))
-                await log_chat.send(embed=emnew)
-            else:
-                em = discord.Embed(title=f"{before.display_name}'s Name/Discriminator Updated", color=discord.Color.blue(), timestamp=datetime.utcnow())
-                em.add_field(name="Before", value=f"`{before.name}#{before.discriminator}`", inline=False)
-                em.add_field(name="After", value=f"`{after.name}#{after.discriminator}`", inline=False)
-                em.set_footer(text="USER ID: " + str(before.id))
-                em.set_thumbnail(url=before.avatar_url)
-                await log_chat.send(embed=em)
+        if bot.data['logs'][str(guild)] != "":
+            guild = int(guild)
+            guildd = bot.get_guild(guild)
+            if guildd.get_member(after.id) is not None:
+                log_chat = bot.get_channel(bot.data['logs'][str(guild.id)])
+                if before.avatar != after.avatar:
+                    emold = discord.Embed(title=f"{before.display_name}'s Avatar Updated", description=f"[Before]({before.avatar_url})", color=discord.Color.blue(), timestamp=datetime.utcnow())
+                    avb = before.avatar_url_as(size=512)
+                    emold.set_image(url=avb)
+                    emold.set_footer(text="USER ID: " + str(before.id))
+                    await log_chat.send(embed=emold)
+                    await asyncio.sleep(2)
+                    emnew = discord.Embed(title=f"{before.display_name}'s Avatar Updated", description=f"[After]({after.avatar_url})", color=discord.Color.blue(), timestamp=datetime.utcnow())
+                    ava = after.avatar_url_as(size=512)
+                    emnew.set_image(url=ava)
+                    emnew.set_footer(text="USER ID: " + str(before.id))
+                    await log_chat.send(embed=emnew)
+                else:
+                    em = discord.Embed(title=f"{before.display_name}'s Name/Discriminator Updated", color=discord.Color.blue(), timestamp=datetime.utcnow())
+                    em.add_field(name="Before", value=f"`{before.name}#{before.discriminator}`", inline=False)
+                    em.add_field(name="After", value=f"`{after.name}#{after.discriminator}`", inline=False)
+                    em.set_footer(text="USER ID: " + str(before.id))
+                    em.set_thumbnail(url=before.avatar_url)
+                    await log_chat.send(embed=em)
 
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1998,7 +2000,8 @@ async def on_guild_join(guild):
 
     bot.data['ticket']['chn'][str(guild.id)] = ""
     bot.data['ticket']['count'][str(guild.id)] = 1
-    bot.data['suggest']['val'][str(guild.id)] = {}
+    bot.data['ticket']['val'][str(guild.id)] = {}
+    bot.data['ticket']['staff'][str(guild.id)] = ""
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 for file in os.listdir('./cogs'):

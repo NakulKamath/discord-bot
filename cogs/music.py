@@ -21,6 +21,7 @@ votes = {}
 invite = {}
 bcid = {}
 started = False
+tf = False
 
 URL_REGEX = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
 OPTIONS = {
@@ -140,7 +141,7 @@ class Queue:
         self._queue.extend(upcoming)
 
     def set_repeat_mode(self, mode):
-        if mode == "none":
+        if mode == "none" or mode == 'off':
             self.repeat_mode = RepeatMode.NONE
         elif mode == "1" or mode == 'one':
             self.repeat_mode = RepeatMode.ONE
@@ -263,14 +264,17 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
+        global tf
         if not started == True:
             return
         global chnn
-        if str(before.channel) == chnn[str(member.guild.id)]:
-            if not member.bot:
-                if not [m for m in before.channel.members if not m.bot]:
-                    await self.get_player(member.guild).teardown()
-                    await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"The wait for $"))
+        if str(member.guild.id) in chnn:
+            if str(before.channel) == chnn[str(member.guild.id)]:
+                if not member.bot:
+                    if tf != True:
+                        if not [m for m in before.channel.members if not m.bot]:
+                            await self.get_player(member.guild).teardown()
+                            await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"The wait for $"))
 
     @wavelink.WavelinkMixin.listener()
     async def on_node_ready(self, node):
@@ -349,14 +353,26 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     @commands.command(name="disconnect", aliases=["leave", 'l', 'd'])
     async def disconnect_command(self, ctx):
         global chnn
+        player = self.get_player(ctx)
         if not hasattr(ctx.message.author.voice, 'channel'):
             return
         if chnn[str(ctx.guild.id)] != ctx.message.author.voice.channel.name:
             embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
             await ctx.send(embed=embed)
             return
+        if ussser != ctx.message.author.name:
+            role = discord.utils.find(lambda m: m.name == dj_role, ctx.guild.roles)
+            if role in ctx.message.author.roles:
+                pass
+            else:
+                embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be invoker to skip!")
+                await ctx.send(embed=embed)
+                return
+        if player.queue.upcoming:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> All songs must end!")
+            await ctx.send(embed=embed)
+            return
         await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(f"The wait for $"))
-        player = self.get_player(ctx)
         await player.teardown()
         embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Disconnected!")
         await ctx.send(embed=embed)
@@ -769,7 +785,50 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             player.queue.set_repeat_mode(modde)
             votes[str(ctx.guild.id)] = 0
 
-    
+    @commands.command(name='equalizer', aliases=['eq'])
+    async def equalizer_command(self, ctx: commands.Context, *, equalizer: str):
+        player = self.get_player(ctx)
+
+        if not hasattr(ctx.message.author.voice, 'channel'):
+            return
+        if chnn[str(ctx.guild.id)] != ctx.message.author.voice.channel.name:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
+            await ctx.send(embed=embed)
+            return
+        role = discord.utils.find(lambda m: m.name == dj_role, ctx.guild.roles)
+        if role in ctx.message.author.roles:
+            pass
+
+        eqs = {'flat': wavelink.Equalizer.flat(),
+               'boost': wavelink.Equalizer.boost(),
+               'metal': wavelink.Equalizer.metal(),
+               'piano': wavelink.Equalizer.piano(),
+               'f': wavelink.Equalizer.flat(),
+               'b': wavelink.Equalizer.boost(),
+               'm': wavelink.Equalizer.metal(),
+               'p': wavelink.Equalizer.piano()}
+
+        eq = eqs.get(equalizer.lower(), None)
+
+        if equalizer == 'b':
+            equalizer = 'boost'
+        if equalizer == 'p':
+            equalizer = 'piano'
+        if equalizer == 'm':
+            equalizer = 'metal'
+        if equalizer == 'f':
+            equalizer = 'flat'
+
+        if not eq:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> Invalid EQ provided use `flat(f)`, `boost(b)`, `metal(m)` or `piano(p)`!")
+            await ctx.send(embed=embed)
+            return
+
+        embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Successfully changed equalizer to {equalizer}!")
+        await ctx.send(embed=embed)
+        await player.set_eq(eq)
+
+
     @commands.command(name="seek", aliases=['s'])
     async def seek_command(self, ctx, s: str=None, m: str=None, h: str=None):
         player = self.get_player(ctx) 
@@ -889,7 +948,27 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Seeked to - {h}h {m}m {s}s!")
             await ctx.send(embed=embed)
 
-
+    @commands.command(name='24/7', aliases=['24'])
+    async def tf_command(self, ctx):
+        global tf
+        global modde
+        role = discord.utils.find(lambda m: m.name == dj_role, ctx.guild.roles)
+        if role in ctx.message.author.roles:
+            pass
+        else:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be dj for this command!")
+            await ctx.send(embed=embed)
+            return
+        if tf == True:
+            tf = False
+            self.repeat_mode = RepeatMode.NONE
+            modde = 'none'
+        else:
+            tf = True
+            self.repeat_mode = RepeatMode.ALL
+            modde = 'all'
+        embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Set 24 hour mode to - `{tf}`!")
+        await ctx.send(embed=embed)
 
 def setup(bot):
     bot.add_cog(Music(bot))
