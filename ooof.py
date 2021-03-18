@@ -5,6 +5,7 @@ import asyncio
 import json
 from datetime import datetime, timedelta
 import os
+import random
 
 bot = commands.Bot(command_prefix="$", intents=discord.Intents.all(), case_insensitive=True)
 
@@ -866,32 +867,75 @@ async def msg2():
     ping = ""
     sport = ""
     for mem in bot.data['wt']['sport']['reactants'].keys():
-        ping += mem
+        ping += mem + " "
     lst = bot.data['wt']['sport']['votes'].values()
     val = max(lst)
     for vote in bot.data['wt']['sport']['votes'].keys():
         if bot.data['wt']['sport']['votes'][vote] == val:
-            sport += vote + "/"
             if 'bb' in sport:
-                sport = sport.replace('bb', ':basketball: Basketball')
+                sport = sport.replace('bb', '<:bb:822075825134239744> Basketball')
             if 'fb' in sport:
-                sport = sport.replace('fb', ':soccer: Football')
+                sport = sport.replace('fb', '<:ftbl:822076629156364318> Football')
             if 'bm' in sport:
-                sport = sport.replace('bm', ':badminton: Badminton')
+                sport = sport.replace('bm', '<:bdm:822076228764827678> Badminton')
             if 'cr' in sport:
-                sport = sport.replace('cr', ':cricket_game: Cricket')
+                sport = sport.replace('cr', '<:crick:822076976478289990> Cricket')
             if 'tt' in sport:
-                sport = sport.replace('tt', ':ping_pong: Table tennis')
-            sport = sport[:-1]
+                sport = sport.replace('tt', ':ping_pong::ping_pong: Table Tennis')
+            sport += vote + "/"
+    sport = sport[:-1]
     em = discord.Embed(title="Sport for Today!", description=f"The sport picked for today is - {sport} with {val} votes!")
     mssg = await chn.send(f"{ping} - {str(len(bot.data['wt']['sport']['reactants'].keys()))}", embed=em)
     bot.data['wt']['sport']['id2'] = mssg.id
+    await asyncio.sleep(5)
+    if len(sport) == 78:
+        s1 = sport[0:33]
+        s2 = sport[34:77]
+        s = [s1, s2]
+        await chn.send(f"Since there was a tie of 2 sports, initiating randomizer!")
+        em = discord.Embed(title="Sport for Today!", description=f"The sport picked for today is - {random.choice(s)}!")
+        mssge = await chn.send(f"{ping} - {str(len(bot.data['wt']['sport']['reactants'].keys()))}", embed=em)
+        bot.data['wt']['sport']['id2'] = mssge.id
+        await mssg.delete()
+    elif len(sport) == 112:
+        s1 = sport[0:33]
+        s2 = sport[34:77]
+        s3 = sport[78:111]
+        s = [s1, s2, s3]
+        await chn.send(f"Since there was a tie of 3 sports, initiating randomizer!")
+        em = discord.Embed(title="Sport for Today!", description=f"The sport picked for today is - {random.choice(s)}!")
+        mssge = await chn.send(f"{ping} - {str(len(bot.data['wt']['sport']['reactants'].keys()))}", embed=em)
+        bot.data['wt']['sport']['id2'] = mssge.id
+        await mssg.delete()
+    elif len(sport) == 156:
+        s1 = sport[0:33]
+        s2 = sport[34:77]
+        s3 = sport[78:111]
+        s4 = sport[112:155]
+        s = [s1, s2, s3, s4]
+        await chn.send(f"Since there was a tie of 4 sports, initiating randomizer!")
+        em = discord.Embed(title="Sport for Today!", description=f"The sport picked for today is - {random.choice(s)}!")
+        mssge = await chn.send(f"{ping} - {str(len(bot.data['wt']['sport']['reactants'].keys()))}", embed=em)
+        bot.data['wt']['sport']['id2'] = mssge.id
+        await mssg.delete()
+    elif len(sport) == 190:
+        s1 = sport[0:33]
+        s2 = sport[34:77]
+        s3 = sport[78:111]
+        s4 = sport[112:155]
+        s5 = sport[156:189]
+        s = [s1, s2, s3, s4, s5]
+        await chn.send(f"Since there was a tie of 5 sports, initiating randomizer!")
+        em = discord.Embed(title="Sport for Today!", description=f"The sport picked for today is - {random.choice(s)}!")
+        mssge = await chn.send(f"{ping} - {str(len(bot.data['wt']['sport']['reactants'].keys()))}", embed=em)
+        bot.data['wt']['sport']['id2'] = mssge.id
+        await mssg.delete()
 
 
 @msg2.before_loop
 async def before_msg2():
     for _ in range(60*60*24):
-        if datetime.now().hour == 17 and datetime.now().minute == 0:
+        if datetime.now().hour == 18 and datetime.now().minute == 0:
             return
         await asyncio.sleep(1)
 
@@ -948,27 +992,72 @@ async def msg4():
     val = max(lst)
     for vote in bot.data['wt']['time']['votes'].keys():
         if bot.data['wt']['time']['votes'][vote] == val:
-            time += vote + "/"
             if '65' in time:
-                time = time.replace('65', ':clock630: 6:30')
+                time = time.replace('65', '🕡 6:30')
             if '70' in time:
-                time = time.replace('70', ':clock7: 7:00')
+                time = time.replace('70', '🕖 7:00')
             if '75' in time:
-                time = time.replace('75', ':clock730: 7:30')
+                time = time.replace('75', '🕢 7:30')
             if '80' in time:
-                time = time.replace('80', ':clock8: 8:00')
+                time = time.replace('80', '🕗 8:00')
             if '85' in time:
-                time = time.replace('85', ':clock830: 8:30')
-    time = time[:-1]
-    em = discord.Embed(title="Time for today!", description=f"The time picked for today is - {time} with {val} votes!")
+                time = time.replace('85', '🕣 8:30')
+            time += vote + "/"
+    sport = time[:-1]
+    em = discord.Embed(title="Time for today!", description=f"The time picked for today is - {sport} with {val} votes!")
     mssg = await chn.send(f"{ping} - {str(len(bot.data['wt']['time']['reactants'].keys()))}", embed=em)
     bot.data['wt']['time']['id2'] = mssg.id
+    await asyncio.sleep(5)
+    if len(sport) == 12:
+        s1 = sport[0:5]
+        s2 = sport[6:11]
+        s = [s1, s2]
+        await chn.send(f"Since there was a tie of 2 sports, initiating randomizer!")
+        em = discord.Embed(title="Sport for Today!", description=f"The sport picked for today is - {random.choice(s)}!")
+        mssge = await chn.send(f"{ping} - {str(len(bot.data['wt']['sport']['reactants'].keys()))}", embed=em)
+        bot.data['wt']['sport']['id2'] = mssge.id
+        await mssg.delete()
+    elif len(sport) == 18:
+        s1 = sport[0:5]
+        s2 = sport[6:11]
+        s3 = sport[12:17]
+        s = [s1, s2, s3]
+        await chn.send(f"Since there was a tie of 3 sports, initiating randomizer!")
+        em = discord.Embed(title="Sport for Today!", description=f"The sport picked for today is - {random.choice(s)}!")
+        mssge = await chn.send(f"{ping} - {str(len(bot.data['wt']['sport']['reactants'].keys()))}", embed=em)
+        bot.data['wt']['sport']['id2'] = mssge.id
+        await mssg.delete()
+    elif len(sport) == 24:
+        s1 = sport[0:5]
+        s2 = sport[6:11]
+        s3 = sport[12:17]
+        s4 = sport[18:23]
+        s = [s1, s2, s3, s4]
+        await chn.send(f"Since there was a tie of 4 sports, initiating randomizer!")
+        em = discord.Embed(title="Sport for Today!", description=f"The sport picked for today is - {random.choice(s)}!")
+        mssge = await chn.send(f"{ping} - {str(len(bot.data['wt']['sport']['reactants'].keys()))}", embed=em)
+        bot.data['wt']['sport']['id2'] = mssge.id
+        await mssg.delete()
+    elif len(sport) == 30:
+        s1 = sport[0:5]
+        s2 = sport[6:11]
+        s3 = sport[12:17]
+        s4 = sport[18:23]
+        s5 = sport[24:29]
+        s = [s1, s2, s3, s4, s5]
+        await chn.send(f"Since there was a tie of 5 sports, initiating randomizer!")
+        em = discord.Embed(title="Sport for Today!", description=f"The sport picked for today is - {random.choice(s)}!")
+        mssge = await chn.send(f"{ping} - {str(len(bot.data['wt']['sport']['reactants'].keys()))}", embed=em)
+        bot.data['wt']['sport']['id2'] = mssge.id
+        await mssg.delete()
+
+
 
 
 @msg4.before_loop
 async def before_msg4():
     for _ in range(60*60*24):
-        if datetime.now().hour == 17 and datetime.now().minute == 1:
+        if datetime.now().hour == 18 and datetime.now().minute == 1:
             return
         await asyncio.sleep(1)
 
@@ -1305,7 +1394,6 @@ async def on_raw_reaction_add(payload):
         await memm.delete()
         bot.data['ticket']['val'][str(guild.id)][str(chn)] = member.id
     if message.id == bot.data['wt']['sport']['id']:
-        emj = ""
         if str(emoji) == '🏀':
             bot.data['wt']['sport']['votes']['bb'] = bot.data['wt']['sport']['votes']['bb'] + 1
             emj = "bb"
@@ -1322,17 +1410,18 @@ async def on_raw_reaction_add(payload):
             bot.data['wt']['sport']['votes']['tt'] = bot.data['wt']['sport']['votes']['tt'] + 1
             emj = "tt"
         if str(emoji) == bot.CROSS_MARK:
-            if '<@'+str(member.id)+'>' in bot.data['wt']['sport']['reactants']:
-                em = bot.data['wt']['sport']['reactants']['<@'+str(member.id)+'>']
+            if str(member.mention) in bot.data['wt']['sport']['reactants'] != "":
+                em = bot.data['wt']['sport']['reactants'][str(member.mention)]
                 bot.data['wt']['sport']['votes'][em] = bot.data['wt']['sport']['votes'][em] - 1
-                del bot.data['wt']['sport']['reactants']['<@'+str(member.id)+'>']
+                del bot.data['wt']['sport']['reactants'][str(member.mention)]
             return
-        if '<@'+str(member.id)+'>' in bot.data['wt']['sport']['reactants']:
-            em = bot.data['wt']['sport']['reactants']['<@'+str(member.id)+'>']
+        if str(member.mention) in bot.data['wt']['sport']['reactants'] != "":
+            em = bot.data['wt']['sport']['reactants'][str(member.mention)]
             bot.data['wt']['sport']['votes'][em] = bot.data['wt']['sport']['votes'][em] - 1
-        bot.data['wt']['sport']['reactants']['<@'+str(member.id)+'>'] = emj
+
+
+        bot.data['wt']['sport']['reactants'][str(member.mention)] = emj
     if message.id == bot.data['wt']['time']['id']:
-        emj = ""
         if str(emoji) == '🕡':
             bot.data['wt']['time']['votes']['65'] = bot.data['wt']['time']['votes']['65'] + 1
             emj = "65"
@@ -1349,15 +1438,17 @@ async def on_raw_reaction_add(payload):
             bot.data['wt']['time']['votes']['85'] = bot.data['wt']['time']['votes']['85'] + 1
             emj = "85"
         if str(emoji) == bot.CROSS_MARK:
-            if '<@'+str(member.id)+'>' in bot.data['wt']['time']['reactants'] != "":
-                em = bot.data['wt']['time']['reactants']['<@'+str(member.id)+'>']
+            if str(member.mention) in bot.data['wt']['time']['reactants'] != "":
+                em = bot.data['wt']['time']['reactants'][str(member.mention)]
                 bot.data['wt']['time']['votes'][em] = bot.data['wt']['time']['votes'][em] - 1
-                del bot.data['wt']['time']['reactants']['<@'+str(member.id)+'>']
+                del bot.data['wt']['time']['reactants'][str(member.mention)]
             return
-        if '<@'+str(member.id)+'>' in bot.data['wt']['time']['reactants']:
-            em = bot.data['wt']['time']['reactants']['<@'+str(member.id)+'>']
+        if str(member.mention) in bot.data['wt']['time']['reactants'] != "":
+            em = bot.data['wt']['time']['reactants'][str(member.mention)]
             bot.data['wt']['time']['votes'][em] = bot.data['wt']['time']['votes'][em] - 1
-        bot.data['wt']['time']['reactants']['<@'+str(member.id)+'>'] = emj
+
+
+        bot.data['wt']['time']['reactants'][str(member.mention)] = emj
 
     await save()
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
