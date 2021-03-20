@@ -203,13 +203,16 @@ class Player(wavelink.Player):
             await self.start_playback()
     
     async def add_track(self, ctx, tracks):
+        global qpr
+        global qpru
         track = self.current
-        channel = self.bot.get_channel(int(self.channel_id))
         if not tracks:
             return False
         
         if (track := tracks[0]) is not None:
             self.queue.add(track)
+            qpr[track.id] = ctx.message.author.name
+            qpru[track.id] = f"{ctx.message.author.avatar_url}"
 
         if not self.is_playing and not self.queue.is_empty:
             await self.start_playback()
@@ -557,7 +560,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         await ctx.send(embed=embed)
         modde = 'none'
 
-    @commands.command(name="next", aliases=["skip"])
+    @commands.command(name="next", aliases=["skip", 'n'])
     async def next_command(self, ctx):
         global dj_role
         global ussser
@@ -1063,6 +1066,46 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             modde = 'all'
         embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Set 24 hour mode to - `{tf}`!")
         await ctx.send(embed=embed)
+
+    @commands.command()
+    async def lyrics(self, ctx, *, name: str = None):
+        player = self.get_player(ctx)
+        if name is None:
+            name = player.queue.current_track
+        url = f'https://some-random-api.ml/lyrics?title={name}'
+        async with ClientSession() as session:
+            async with session.get(url) as response:
+                html = await response.json()
+                data = html
+                if 'title' not in data:
+                    embed = discord.Embed(description="<:cross_mark:814801897138815026> The lyrics for this song were not found!")
+                    await ctx.send(embed=embed)
+                    return
+                title = data['title']
+                lyrics = data['lyrics']
+                lines = lyrics.split("\n\n")
+
+        embed = discord.Embed(title=title,
+                              color=discord.colour.Color.blue())
+        await ctx.send(embed=embed)
+
+        for line in lines:
+            if len(line) >= 2000:
+                line1 = line[0:(int(len(line))) // 2]
+                line2 = line[(int(len(line))//2):]
+                embed = discord.Embed(title=None,
+                                      color=discord.colour.Color.blue())
+                embed.description = line1
+                await ctx.send(embed=embed)
+                embed = discord.Embed(title=None,
+                                      color=discord.colour.Color.blue())
+                embed.description = line2
+                await ctx.send(embed=embed)
+            else:
+                embed = discord.Embed(title=None,
+                                      color=discord.colour.Color.blue())
+                embed.description = line
+                await ctx.send(embed=embed)
 
 def setup(bot):
     bot.add_cog(Music(bot))
