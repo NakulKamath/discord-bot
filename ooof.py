@@ -35,26 +35,85 @@ kicks = False
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command()
-async def trail(context, e: str or discord.Emoji=None):
-    print(type(e))
-    print(type(str(e)))
-    if e not in bot.emoji.values():
-        if type(e) == discord.Emoji:
-            if context.message.author.id not in bot.data['trail']:
-                bot.data['trail'][context.message.author.id] = {}
-            bot.data['trail'][context.message.author.id]['emj'] = str(e)
-            bot.data['trail'][context.message.author.id]['tog'] = True
-        else:
-            em = discord.Embed(description=f"{bot.CROSS_MARK} Please use a valid emoji!")
-            await context.send(embed=em)
+@commands.has_permissions(manage_roles=True)
+async def mute(ctx, mem: discord.Member=None, s: str=None):
+    if mem == None:
+        em = discord.Embed(description=f"{bot.CROSS_MARK} Please mention a member to mute!")
+        await ctx.send(embed=em)
+        return
+    try:
+        role = ctx.guild.get_role(bot.data['mute'][str(ctx.guild.id)])
+    except:
+        em = discord.Embed(description=f"{bot.CROSS_MARK} This server does not have a mute role set up! \nReply yes to automatically create one!")
+        await ctx.send(embed=em)
+        def check(m):
+            return m.author == ctx.message.author and m.channel == ctx.channel
+        try:
+            msg = await bot.wait_for('message', timeout= 30, check=check)
+        except asyncio.TimeoutError:
+            em = discord.Embed(description=f"{bot.CROSS_MARK} You ran out of time! Please re-type the command!")
+            await ctx.channel.send(embed=em)
+            return
+        if msg.content.upper() == 'YES':
+            role = await ctx.guild.create_role(name='muted')
+            bot.data['mute'][str(ctx.guild.id)] = role.id
+            for chn in ctx.guild.channels:
+                await chn.set_permissions(role, read_messages=True, send_messages=False)
+        return
     else:
-        if context.message.author.id not in bot.data['trail']:
-            bot.data['trail'][context.message.author.id] = {}
-        bot.data['trail'][context.message.author.id]['emj'] = e
-        bot.data['trail'][context.message.author.id]['tog'] = True
-
-
-    await save()
+        val = 0
+        t = re.compile(r"([0-9][0-9](s|m|h|d|w))|([0-9](s|m|h|d|w))")
+        if s != None:
+            tts = t.match(s)
+            if tts == None:
+                embed = discord.Embed(description="<:cross_mark:814801897138815026> Use the syntax `XXs/m/h/d/w`!")
+                await ctx.send(embed=embed)
+                return
+            ts = tts.group()
+            if ts[-1] == 's':
+                ts = ts[:-1]
+                val = val + int(ts)*1000
+            if ts[-1] == 'm':
+                ts = ts[:-1]
+                val = val + int(ts)*60000
+            if ts[-1] == 'h':
+                ts = ts[:-1]
+                val = val + int(ts)*3600000
+            if ts[-1] == 'd':
+                ts = ts[:-1]
+                val = val + int(ts)*86400000
+            if ts[-1] == 'w':
+                ts = ts[:-1]
+                val = val + int(ts)*604800000
+            val = round(val//1000)
+            m, s = divmod(val, 60)
+            h, m = divmod(m, 60)
+            d, h = divmod(h, 24)
+            w, d = divmod(d, 7)
+            if int(w) == 0 and int(d) == 0 and int(h) == 0 and int(m) == 0 and s != 0:
+                embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Muted {mem.mention} for {s}s!", timestamp=datetime.utcnow())
+                await ctx.send(embed=embed)
+            elif int(w) == 0 and int(d) == 0 and int(h) == 0 and int(m) != 0:
+                embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Muted {mem.mention} for {m}m {s}s!", timestamp=datetime.utcnow())
+                await ctx.send(embed=embed)
+            elif int(w) == 0 and int(d) == 0 and int(h) != 0:
+                embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Muted {mem.mention} for {h}h {m}m {s}s!", timestamp=datetime.utcnow())
+                await ctx.send(embed=embed)
+            elif int(w) == 0 and int(d) != 0:
+                embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Muted {mem.mention} for {d}d {h}h {m}m {s}s!", timestamp=datetime.utcnow())
+                await ctx.send(embed=embed)
+            elif int(w) != 0:
+                embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Muted {mem.mention} for {w}w {d}d {h}h {m}m {s}s!", timestamp=datetime.utcnow())
+                await ctx.send(embed=embed)
+            role = ctx.guild.get_role(bot.data['mute'][str(ctx.guild.id)])
+            await mem.add_roles(role)
+            await asyncio.sleep(val)
+            await mem.remove_roles(role)
+        else:
+            embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Muted {mem.mention} indefinitely", timestamp=datetime.utcnow())
+            await ctx.send(embed=embed)
+            role = ctx.guild.get_role(bot.data['mute'][str(ctx.guild.id)])
+            await mem.add_roles(role)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -531,7 +590,7 @@ async def on_command_error(ctx, error):
         return
 
     # handle Cooldown's
-    if isinstance(error, commands.CommandOnCooldown):
+    if isinstance(error, commands.CommandOnCooldown, ):
         m, s = divmod(error.retry_after, 60)
         h, m = divmod(m, 60)
         if int(h) == 0 and int(m) == 0:
@@ -856,7 +915,7 @@ async def msg1():
 @msg1.before_loop
 async def before_msg1():
     for _ in range(60*60*24):
-        if datetime.now().hour == 22 and datetime.now().minute == 0:
+        if datetime.now().hour == 22 and datetime.now().minute == 31:
             return
         await asyncio.sleep(1)
 
@@ -889,8 +948,8 @@ async def msg2():
     bot.data['wt']['sport']['id2'] = mssg.id
     await asyncio.sleep(5)
     if len(sport) == 78:
-        s1 = sport[0:33]
-        s2 = sport[34:77]
+        s1 = sport[0:34]
+        s2 = sport[34:78]
         s = [s1, s2]
         await chn.send(f"Since there was a tie of 2 sports, initiating randomizer!")
         em = discord.Embed(title="Sport for Today!", description=f"The sport picked for today is - {random.choice(s)}!")
@@ -898,9 +957,9 @@ async def msg2():
         bot.data['wt']['sport']['id2'] = mssge.id
         await mssg.delete()
     elif len(sport) == 112:
-        s1 = sport[0:33]
-        s2 = sport[34:77]
-        s3 = sport[78:111]
+        s1 = sport[0:34]
+        s2 = sport[34:78]
+        s3 = sport[78:112]
         s = [s1, s2, s3]
         await chn.send(f"Since there was a tie of 3 sports, initiating randomizer!")
         em = discord.Embed(title="Sport for Today!", description=f"The sport picked for today is - {random.choice(s)}!")
@@ -908,10 +967,10 @@ async def msg2():
         bot.data['wt']['sport']['id2'] = mssge.id
         await mssg.delete()
     elif len(sport) == 156:
-        s1 = sport[0:33]
-        s2 = sport[34:77]
-        s3 = sport[78:111]
-        s4 = sport[112:155]
+        s1 = sport[0:34]
+        s2 = sport[34:78]
+        s3 = sport[78:112]
+        s4 = sport[112:156]
         s = [s1, s2, s3, s4]
         await chn.send(f"Since there was a tie of 4 sports, initiating randomizer!")
         em = discord.Embed(title="Sport for Today!", description=f"The sport picked for today is - {random.choice(s)}!")
@@ -919,11 +978,11 @@ async def msg2():
         bot.data['wt']['sport']['id2'] = mssge.id
         await mssg.delete()
     elif len(sport) == 190:
-        s1 = sport[0:33]
-        s2 = sport[34:77]
-        s3 = sport[78:111]
-        s4 = sport[112:155]
-        s5 = sport[156:189]
+        s1 = sport[0:34]
+        s2 = sport[34:78]
+        s3 = sport[78:112]
+        s4 = sport[112:156]
+        s5 = sport[156:190]
         s = [s1, s2, s3, s4, s5]
         await chn.send(f"Since there was a tie of 5 sports, initiating randomizer!")
         em = discord.Embed(title="Sport for Today!", description=f"The sport picked for today is - {random.choice(s)}!")
@@ -976,7 +1035,7 @@ async def msg3():
 @msg3.before_loop
 async def before_msg3():
     for _ in range(60*60*24):
-        if datetime.now().hour == 22 and datetime.now().minute == 1:
+        if datetime.now().hour == 22 and datetime.now().minute == 32:
             return
         await asyncio.sleep(1)
 
@@ -1009,44 +1068,45 @@ async def msg4():
     bot.data['wt']['time']['id2'] = mssg.id
     await asyncio.sleep(5)
     if len(sport) == 12:
-        s1 = sport[0:5]
-        s2 = sport[6:11]
+        s1 = sport[0:6]
+        s2 = sport[6:12]
         s = [s1, s2]
-        await chn.send(f"Since there was a tie of 2 sports, initiating randomizer!")
+        print(s)
+        await chn.send(f"Since there was a tie of 2 timings, initiating randomizer!")
         em = discord.Embed(title="Time for Today!", description=f"The time picked for today is - {random.choice(s)}!")
         mssge = await chn.send(f"{ping} - {str(len(bot.data['wt']['time']['reactants'].keys()))}", embed=em)
         bot.data['wt']['time']['id2'] = mssge.id
         await mssg.delete()
     elif len(sport) == 18:
-        s1 = sport[0:5]
-        s2 = sport[6:11]
-        s3 = sport[12:17]
+        s1 = sport[0:6]
+        s2 = sport[6:12]
+        s3 = sport[12:18]
         s = [s1, s2, s3]
-        await chn.send(f"Time there was a tie of 3 sports, initiating randomizer!")
-        em = discord.Embed(title="Sport for Today!", description=f"The time picked for today is - {random.choice(s)}!")
+        await chn.send(f"Time there was a tie of 3 timings, initiating randomizer!")
+        em = discord.Embed(title="Time for Today!", description=f"The time picked for today is - {random.choice(s)}!")
         mssge = await chn.send(f"{ping} - {str(len(bot.data['wt']['time']['reactants'].keys()))}", embed=em)
         bot.data['wt']['time']['id2'] = mssge.id
         await mssg.delete()
     elif len(sport) == 24:
-        s1 = sport[0:5]
-        s2 = sport[6:11]
-        s3 = sport[12:17]
-        s4 = sport[18:23]
+        s1 = sport[0:6]
+        s2 = sport[6:12]
+        s3 = sport[12:18]
+        s4 = sport[18:24]
         s = [s1, s2, s3, s4]
-        await chn.send(f"Time there was a tie of 4 sports, initiating randomizer!")
-        em = discord.Embed(title="Sport for Today!", description=f"The time picked for today is - {random.choice(s)}!")
+        await chn.send(f"Time there was a tie of 4 timings, initiating randomizer!")
+        em = discord.Embed(title="Time for Today!", description=f"The time picked for today is - {random.choice(s)}!")
         mssge = await chn.send(f"{ping} - {str(len(bot.data['wt']['time']['reactants'].keys()))}", embed=em)
         bot.data['wt']['time']['id2'] = mssge.id
         await mssg.delete()
     elif len(sport) == 30:
-        s1 = sport[0:5]
-        s2 = sport[6:11]
-        s3 = sport[12:17]
-        s4 = sport[18:23]
-        s5 = sport[24:29]
+        s1 = sport[0:6]
+        s2 = sport[6:12]
+        s3 = sport[12:18]
+        s4 = sport[18:24]
+        s5 = sport[24:30]
         s = [s1, s2, s3, s4, s5]
-        await chn.send(f"Time there was a tie of 5 sports, initiating randomizer!")
-        em = discord.Embed(title="Sport for Today!", description=f"The time picked for today is - {random.choice(s)}!")
+        await chn.send(f"Time there was a tie of 5 timings, initiating randomizer!")
+        em = discord.Embed(title="Time for Today!", description=f"The time picked for today is - {random.choice(s)}!")
         mssge = await chn.send(f"{ping} - {str(len(bot.data['wt']['time']['reactants'].keys()))}", embed=em)
         bot.data['wt']['time']['id2'] = mssge.id
         await mssg.delete()
@@ -1545,13 +1605,14 @@ async def on_guild_channel_update(before, after):
                 if role not in after.changed_roles: 
                     valueb += "None\n"
                     valuea += f"**Overwrite removed - ** {role.mention}\n"
-    if before.topic != after.topic:
-        if before.topic == "":
-            valueb += "None\n"
-            valuea += f"**Topic added - ** {after.mention}\n"
-        if after.topic == "":
-            valueb += "None\n"
-            valuea += f"**Topic removed - ** {role.mention}\n"
+    if type(before) == discord.TextChannel:
+        if before.topic != after.topic:
+            if before.topic == "":
+                valueb += "None\n"
+                valuea += f"**Topic added - ** {after.mention}\n"
+            if after.topic == "":
+                valueb += "None\n"
+                valuea += f"**Topic removed - ** {role.mention}\n"
     em.add_field(name="Before", value=valueb)
     em.add_field(name="After", value=valuea)
     em.set_thumbnail(url=before.guild.icon_url)
@@ -2098,7 +2159,6 @@ async def on_guild_join(guild):
 for file in os.listdir('./cogs'):
     if file.endswith('.py'):
         bot.load_extension(f"cogs.{file[:-3]}")
-
 
 
 
