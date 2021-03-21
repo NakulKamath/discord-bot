@@ -915,7 +915,7 @@ async def msg1():
 @msg1.before_loop
 async def before_msg1():
     for _ in range(60*60*24):
-        if datetime.now().hour == 22 and datetime.now().minute == 31:
+        if datetime.now().hour == 22 and datetime.now().minute == 0:
             return
         await asyncio.sleep(1)
 
@@ -1004,13 +1004,13 @@ async def before_msg2():
 async def msg3():
     chn = bot.get_channel(821293030614368286)
     if bot.data['wt']['time']['id'] != 0:
-        msggggg = await chn.fetch_message(bot.data['wt']['time']['id'])
-        await msggggg.delete()
+        msg = await chn.fetch_message(bot.data['wt']['time']['id'])
+        await msg.delete()
         bot.data['wt']['time']['id'] = 0
 
     if bot.data['wt']['time']['id2'] != 0:
-        msggggggg = await chn.fetch_message(bot.data['wt']['time']['id2'])
-        await msggggggg.delete()
+        msgg = await chn.fetch_message(bot.data['wt']['time']['id2'])
+        await msgg.delete()
         bot.data['wt']['time']['id2'] = 0
 
 
@@ -1035,7 +1035,7 @@ async def msg3():
 @msg3.before_loop
 async def before_msg3():
     for _ in range(60*60*24):
-        if datetime.now().hour == 22 and datetime.now().minute == 32:
+        if datetime.now().hour == 22 and datetime.now().minute == 0:
             return
         await asyncio.sleep(1)
 

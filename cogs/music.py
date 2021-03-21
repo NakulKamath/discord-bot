@@ -24,6 +24,7 @@ invite = {}
 bcid = {}
 started = False
 tf = False
+voters = []
 
 URL_REGEX = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
 OPTIONS = {
@@ -507,13 +508,84 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
                 embed = discord.Embed(color=discord.Color.blue())
                 embed.description = f"<:tick_mark:814801884358901770> Succesfully added {len(tracks)} tracks to the queue!\n{failmsg}"
                 return await msg.edit(embed=embed)
+            if query.startswith('https://open.spotify.com/track'):
+                query = query.replace('https://open.spotify.com/track/', '')
+                url = f"https://api.spotify.com/v1/tracks/{query}"
+                headers = {"Authorization": f"Bearer {self.token}"}
+
+                async with ClientSession(headers=headers) as sess:
+                    async with sess.get(url) as resp:
+                        html = await resp.json()
+                        data = html
+
+                track = data['name'] + ' by ' + data['album']['artists'][0]['name']
+
+                tracksearch = f"ytsearch:{track}"
+                await player.add_track(ctx, await self.wavelink.get_tracks(tracksearch))
+
+                embed = discord.Embed(description = f"<:tick_mark:814801884358901770> Succesfully added {track} to the queue!")
+                return await ctx.send(embed=embed)
+            if query.startswith('https://open.spotify.com/album'):
+                query = query.replace('https://open.spotify.com/album/', '')
+                query = query.split('?si')[0]
+                url = f"https://api.spotify.com/v1/albums/{query}/tracks"
+                headers = {"Authorization": f"Bearer {self.token}"}
+
+                async with ClientSession(headers=headers) as sess:
+                    async with sess.get(url) as resp:
+                        html = await resp.json()
+                        data = html
+
+                tracks = []
+
+                for track in data["items"]:
+                    tracks.append(f"{track['name']} by {track['artists'][0]['name']}")
+
+                # start = time.time()
+
+                embed = discord.Embed(title=f"<a:loading:822804516768317460> Loading all {len(tracks)} tracks", color=discord.Color.blue())
+                embed.description = "Please allow up to one minute for me to load all the tracks. Playback should start instantly with the first song though."
+                msg = await ctx.send(embed=embed)
+
+
+                fails = []
+                songnum = 0
+
+                for track in tracks:
+                    songnum += 1
+                    tracksearch = f"ytsearch:{track}"
+                    success = await player.add_track(ctx, await self.wavelink.get_tracks(tracksearch))
+                    if not success:
+                        fails.append(track)
+                    if not songnum % 5:
+                        val1 = int(round((songnum - len(fails))/len(tracks) * 25))
+                        val2 = 25-int(round((songnum - len(fails))/len(tracks) * 25))
+                        if val1 > 0:
+                            vall=f"[{'▬'*val1}]({url})"
+                        else:
+                            vall="▬"*val1
+                        embed = discord.Embed(description=f"<a:loading:822804516768317460> Loading all {len(tracks)} tracks\n" + vall + f" :radio_button: {'▬'*val2}({round((songnum - len(fails))/len(tracks) * 100, 2)}%)" + "\nPlease allow up to one minute for me to load all the tracks. Playback should start instantly with the first song though.", color=discord.Color.blue())
+                        await msg.edit(embed=embed)
+
+                if fails:
+                    failmsg = f"\n\nFailed to add `{'`, `'.join(fail for fail in fails)}`"
+                else:
+                    failmsg = ""
+
+                # end = time.time()
+                # diff = round(end - start)
+                # text = str(dt.timedelta(seconds=diff))
+                # text = dt.datetime.strptime(text, "%H:%M:%S")
+                # text = text.strftime('%M Minutes and %S Seconds')
+
+                embed = discord.Embed(color=discord.Color.blue())
+                embed.description = f"<:tick_mark:814801884358901770> Succesfully added {len(tracks)} tracks to the queue!\n{failmsg}"
+                return await msg.edit(embed=embed)
+
             if not re.match(URL_REGEX, query):
                 query = f"ytsearch:{query}"
 
             await player.add_tracks(ctx, await self.wavelink.get_tracks(query))
-
-
-
 
     @play_command.error
     async def play_command_error(self, ctx, exc):
@@ -813,9 +885,13 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         global ussser
         global ussser_url
         global votes
+        global qpr
+        global qpru
+        global voters
         ussser[payload.player.guild_id] = qpr[str(payload.track)]
         ussser_url[payload.player.guild_id] = qpru[str(payload.track)]
         votes[str(payload.player.guild_id)] = 0
+        voters = []
     
     @commands.command(name="restart", aliases=["r"])
     async def restart_command(self, ctx):
@@ -846,6 +922,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         global dj_role
         global chnn
         global votes
+        global voters
         if str(ctx.guild.id) not in votes.keys():
             votes[str(ctx.guild.id)] = 0
         if not hasattr(ctx.message.author.voice, 'channel'):
@@ -854,7 +931,10 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
             await ctx.send(embed=embed)
             return
-
+        if str(ctx.message.author.id) in voters:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You have already voted!")
+            await ctx.send(embed=embed)
+            return
         player = self.get_player(ctx)
         vcn = len(ctx.message.author.voice.channel.members) - 1
         votes[str(ctx.guild.id)] = votes[str(ctx.guild.id)] + 1
@@ -863,6 +943,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             vr = 1
         embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Added your vote - `{votes[str(ctx.guild.id)]}/{vr}` votes!")
         await ctx.send(embed=embed)
+        voters.append(str(ctx.message.author.id))
         if votes[str(ctx.guild.id)] >= vr:
             if not player.queue.upcoming:
                 global modde
@@ -928,6 +1009,23 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(name="seek", aliases=['s'])
     async def seek_command(self, ctx, s: str=None, m: str=None, h: str=None):
+        global dj_role
+        global ussser
+        global chnn
+        if not hasattr(ctx.message.author.voice, 'channel'):
+            return
+        if chnn[str(ctx.guild.id)] != ctx.message.author.voice.channel.name:
+            embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be in the player vc!")
+            await ctx.send(embed=embed)
+            return
+        if ussser[ctx.guild.id] != ctx.message.author.name:
+            role = discord.utils.find(lambda m: m.name == dj_role, ctx.guild.roles)
+            if role in ctx.message.author.roles:
+                pass
+            else:
+                embed = discord.Embed(description="<:cross_mark:814801897138815026> You must be invoker to seek!")
+                await ctx.send(embed=embed)
+                return
         player = self.get_player(ctx) 
         if not hasattr(player.current, 'length'):
             embed = discord.Embed(description="<:cross_mark:814801897138815026> Not playing a track at the moment!")
