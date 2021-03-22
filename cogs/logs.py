@@ -360,6 +360,12 @@ class Logging(commands.Cog):
         em.set_footer(text="ROLE ID: " + str(before.id))
         if valuea != "" and valueb != "":
             await log_chat.send(embed=em)
+        bo = before.overwrites
+        ao = after.overwrites
+        for bp in bo.values():
+            for r, p in iter(bp):
+                print(r)
+                print(p)
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_guild_channel_pins_update(self, channel, last_pin):
