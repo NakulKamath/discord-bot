@@ -354,18 +354,497 @@ class Logging(commands.Cog):
                 else:
                     valueb += f"**Topic - ** {before.topic}\n"
                     valuea += f"**Topic - ** {after.topic}\n"
+        
+        bo = before.overwrites
+        ao = after.overwrites
+        be = ""
+        ae = ""
+        permissions = ""
+        bp = {}
+        ap = {}
+        for r in bo.keys():
+            embed = discord.Embed(title=f'Changed overwrites', description=f'{r.mention} in {after.mention}')
+            for bbr, bbp in iter(bo[r]):
+                bp[bbr] = bbp
+            for bbr, bbp in iter(ao[r]):
+                ap[bbr] = bbp
+            if 'attach_files' in bp.keys():
+                if bp['attach_files'] != ap['attach_files']:
+                    if bp['attach_files'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['attach_files'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['attach_files'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['attach_files'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['attach_files'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['attach_files'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**attach_files** {be} -> {ae}\n"
+            if 'manage_channels' in bp.keys():
+                if bp['manage_channels'] != ap['manage_channels']:
+                    if bp['manage_channels'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['manage_channels'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['manage_channels'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['manage_channels'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['manage_channels'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['manage_channels'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**manage_channels** {be} -> {ae}\n"
+            if bp['view_guild_insights'] != ap['view_guild_insights']:
+                if bp['view_guild_insights'] == None:
+                    be = self.bot.SLASH_MARK
+                if ap['view_guild_insights'] == None:
+                    ae = self.bot.SLASH_MARK
+                if bp['view_guild_insights'] == True:
+                    be = self.bot.TICK_MARK
+                if ap['view_guild_insights'] == True:
+                    ae = self.bot.TICK_MARK
+                if bp['view_guild_insights'] == False:
+                    be = self.bot.CROSS_MARK
+                if ap['view_guild_insights'] == False:
+                    ae = self.bot.CROSS_MARK
+                permissions += f"**view_guild_insights** {be} -> {ae}\n"
+            if 'add_reactions' in bp.keys():
+                if bp['add_reactions'] != ap['add_reactions']:
+                    if bp['add_reactions'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['add_reactions'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['add_reactions'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['add_reactions'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['add_reactions'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['add_reactions'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**add_reactions** {be} -> {ae}\n"
+            if 'external_emojis' in bp.keys():
+                if bp['external_emojis'] != ap['external_emojis']:
+                    if bp['external_emojis'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['external_emojis'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['external_emojis'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['external_emojis'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['external_emojis'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['external_emojis'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**external_emojis** {be} -> {ae}\n"
+            if 'ban_members' in bp.keys():
+                if bp['ban_members'] != ap['ban_members']:
+                    if bp['ban_members'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['ban_members'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['ban_members'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['ban_members'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['ban_members'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['ban_members'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**ban_members** {be} -> {ae}\n"
+            if 'send_messages' in bp.keys():
+                if bp['send_messages'] != ap['send_messages']:
+                    if bp['send_messages'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['send_messages'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['send_messages'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['send_messages'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['send_messages'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['send_messages'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**send_messages** {be} -> {ae}\n"
+            if 'change_nickname' in bp.keys():
+                if bp['change_nickname'] != ap['change_nickname']:
+                    if bp['change_nickname'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['change_nickname'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['change_nickname'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['change_nickname'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['change_nickname'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['change_nickname'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**change_nickname** {be} -> {ae}\n"
+            if 'move_members' in bp.keys():
+                if bp['move_members'] != ap['move_members']:
+                    if bp['move_members'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['move_members'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['move_members'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['move_members'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['move_members'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['move_members'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**move_members** {be} -> {ae}\n"
+            if 'embed_links' in bp.keys():
+                if bp['embed_links'] != ap['embed_links']:
+                    if bp['embed_links'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['embed_links'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['embed_links'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['embed_links'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['embed_links'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['embed_links'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**embed_links** {be} -> {ae}\n"
+            if 'manage_emojis' in bp.keys():
+                if bp['manage_emojis'] != ap['manage_emojis']:
+                    if bp['manage_emojis'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['manage_emojis'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['manage_emojis'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['manage_emojis'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['manage_emojis'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['manage_emojis'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**manage_emojis** {be} -> {ae}\n"
+            if 'view_audit_log' in bp.keys():
+                if bp['view_audit_log'] != ap['view_audit_log']:
+                    if bp['view_audit_log'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['view_audit_log'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['view_audit_log'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['view_audit_log'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['view_audit_log'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['view_audit_log'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**view_audit_log** {be} -> {ae}\n"
+            if 'create_instant_invite' in bp.keys():
+                if bp['create_instant_invite'] != ap['create_instant_invite']:
+                    if bp['create_instant_invite'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['create_instant_invite'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['create_instant_invite'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['create_instant_invite'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['create_instant_invite'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['create_instant_invite'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**create_instant_invite** {be} -> {ae}\n"
+            if 'manage_nicknames' in bp.keys():
+                if bp['manage_nicknames'] != ap['manage_nicknames']:
+                    if bp['manage_nicknames'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['manage_nicknames'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['manage_nicknames'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['manage_nicknames'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['manage_nicknames'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['manage_nicknames'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**manage_nicknames** {be} -> {ae}\n"
+            if 'priority_speaker' in bp.keys():
+                if bp['priority_speaker'] != ap['priority_speaker']:
+                    if bp['priority_speaker'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['priority_speaker'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['priority_speaker'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['priority_speaker'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['priority_speaker'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['priority_speaker'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**priority_speaker** {be} -> {ae}\n"
+            if 'manage_guild' in bp.keys():
+                if bp['manage_guild'] != ap['manage_guild']:
+                    if bp['manage_guild'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['manage_guild'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['manage_guild'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['manage_guild'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['manage_guild'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['manage_guild'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**manage_guild** {be} -> {ae}\n"
+            if 'administrator' in bp.keys():
+                if bp['administrator'] != ap['administrator']:
+                    if bp['administrator'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['administrator'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['administrator'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['administrator'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['administrator'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['administrator'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**administrator** {be} -> {ae}\n"
+            if 'read_message_history' in bp.keys():
+                if bp['read_message_history'] != ap['read_message_history']:
+                    if bp['read_message_history'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['read_message_history'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['read_message_history'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['read_message_history'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['read_message_history'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['read_message_history'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**read_message_history** {be} -> {ae}\n"
+            if 'connect' in bp.keys():
+                if bp['connect'] != ap['connect']:
+                    if bp['connect'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['connect'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['connect'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['connect'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['connect'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['connect'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**connect** {be} -> {ae}\n"
+            if 'manage_messages' in bp.keys():
+                if bp['manage_messages'] != ap['manage_messages']:
+                    if bp['manage_messages'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['manage_messages'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['manage_messages'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['manage_messages'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['manage_messages'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['manage_messages'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**manage_messages** {be} -> {ae}\n"
+            if 'read_messages' in bp.keys():
+                if bp['read_messages'] != ap['read_messages']:
+                    if bp['read_messages'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['read_messages'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['read_messages'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['read_messages'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['read_messages'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['read_messages'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**read_messages** {be} -> {ae}\n"
+            if 'manage_roles' in bp.keys():
+                if bp['manage_roles'] != ap['manage_roles']:
+                    if bp['manage_roles'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['manage_roles'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['manage_roles'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['manage_roles'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['manage_roles'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['manage_roles'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**manage_roles** {be} -> {ae}\n"
+            if 'stream' in bp.keys():
+                if bp['stream'] != ap['stream']:
+                    if bp['stream'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['stream'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['stream'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['stream'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['stream'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['stream'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**stream** {be} -> {ae}\n"
+            if 'kick_members' in bp.keys():
+                if bp['kick_members'] != ap['kick_members']:
+                    if bp['kick_members'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['kick_members'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['kick_members'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['kick_members'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['kick_members'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['kick_members'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**kick_members** {be} -> {ae}\n"
+            if 'send_tts_messages' in bp.keys():
+                if bp['send_tts_messages'] != ap['send_tts_messages']:
+                    if bp['send_tts_messages'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['send_tts_messages'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['send_tts_messages'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['send_tts_messages'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['send_tts_messages'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['send_tts_messages'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**send_tts_messages** {be} -> {ae}\n"
+            if 'mute_members' in bp.keys():
+                if bp['mute_members'] != ap['mute_members']:
+                    if bp['mute_members'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['mute_members'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['mute_members'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['mute_members'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['mute_members'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['mute_members'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**mute_members** {be} -> {ae}\n"
+            if 'use_voice_activation' in bp.keys():
+                if bp['use_voice_activation'] != ap['use_voice_activation']:
+                    if bp['use_voice_activation'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['use_voice_activation'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['use_voice_activation'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['use_voice_activation'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['use_voice_activation'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['use_voice_activation'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**use_voice_activation** {be} -> {ae}\n"
+            if 'mention_everyone' in bp.keys():
+                if bp['mention_everyone'] != ap['mention_everyone']:
+                    if bp['mention_everyone'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['mention_everyone'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['mention_everyone'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['mention_everyone'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['mention_everyone'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['mention_everyone'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**mention_everyone** {be} -> {ae}\n"
+            if 'speak' in bp.keys():
+                if bp['speak'] != ap['speak']:
+                    if bp['speak'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['speak'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['speak'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['speak'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['speak'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['speak'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**speak** {be} -> {ae}\n"
+            if 'manage_webhooks' in bp.keys():
+                if bp['manage_webhooks'] != ap['manage_webhooks']:
+                    if bp['manage_webhooks'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['manage_webhooks'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['manage_webhooks'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['manage_webhooks'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['manage_webhooks'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['manage_webhooks'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**manage_webhooks** {be} -> {ae}\n"
+            if 'deafen_members' in bp.keys():
+                if bp['deafen_members'] != ap['deafen_members']:
+                    if bp['deafen_members'] == None:
+                        be = self.bot.SLASH_MARK
+                    if ap['deafen_members'] == None:
+                        ae = self.bot.SLASH_MARK
+                    if bp['deafen_members'] == True:
+                        be = self.bot.TICK_MARK
+                    if ap['deafen_members'] == True:
+                        ae = self.bot.TICK_MARK
+                    if bp['deafen_members'] == False:
+                        be = self.bot.CROSS_MARK
+                    if ap['deafen_members'] == False:
+                        ae = self.bot.CROSS_MARK
+                    permissions += f"**deafen_members** {be} -> {ae}\n"      
+            if len(permissions) > 1024:
+                permissions = permissions[0:1020] + '\n...'
+            if permissions != "":
+                embed.add_field(name="Changes", value=permissions)
+                await log_chat.send(embed=embed)
+            permissions = ""
+
         em.add_field(name="Before", value=valueb)
         em.add_field(name="After", value=valuea)
         em.set_thumbnail(url=before.guild.icon_url)
         em.set_footer(text="ROLE ID: " + str(before.id))
         if valuea != "" and valueb != "":
             await log_chat.send(embed=em)
-        bo = before.overwrites
-        ao = after.overwrites
-        for bp in bo.values():
-            for r, p in iter(bp):
-                print(r)
-                print(p)
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_guild_channel_pins_update(self, channel, last_pin):

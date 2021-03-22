@@ -29,6 +29,8 @@ bot.admin_roles = ["staff", "Mods"]
 bot.server_developer_role = "Server Developers"
 bot.TICK_MARK = "<:tick_mark:814801884358901770>"
 bot.CROSS_MARK = "<:cross_mark:814801897138815026>"
+bot.SLASH_MARK = "<:slash_mark:823436361712271401>"
+bot.INFO_MARK = "<:info_mark:823436512133513246>"
 ban_reason = ""
 kicks = False
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
