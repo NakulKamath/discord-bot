@@ -57,8 +57,6 @@ class Logging(commands.Cog):
         em.set_author(name=str(after.author), icon_url=after.author.avatar_url)
         em.set_footer(text="MESSAGE ID: " + str(after.id))
         await log_chat.send(embed=em)
-
-        await self.save()
     #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload):
@@ -86,8 +84,6 @@ class Logging(commands.Cog):
         if hasattr(message, 'id'):
             em.set_footer(text="MESSAGE ID: " + str(message.id))
         await log_chat.send(embed=em)
-
-        await self.save()
     #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_raw_bulk_message_delete(self, payload):
@@ -103,8 +99,6 @@ class Logging(commands.Cog):
         em = discord.Embed(description=f"**Bulk message delete in {str(channel.mention)}** \n {str(message_contents)}", color=discord.Color.red(), timestamp=datetime.utcnow())
         em.set_footer(text="CHANNEL ID: " + str(channel.id))
         await log_chat.send(embed=em)
-
-        await self.save()
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -253,8 +247,6 @@ class Logging(commands.Cog):
         em.set_author(name=member.name + "#" + member.discriminator, icon_url=member.avatar_url)
         em.set_footer(text="MESSAGE ID: " + str(message.id))
         await log_chat.send(embed=em)
-
-        await self.save()
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_raw_reaction_clear(self, payload):
@@ -270,8 +262,6 @@ class Logging(commands.Cog):
         em.add_field(name="Message", value=f"[Click Here!]({message.jump_url})", inline=False)
         em.set_thumbnail(url=channel.guild.icon_url)
         await log_chat.send(embed=em)
-
-        await self.save()
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_raw_reaction_clear_emoji(self, payload):
@@ -289,8 +279,6 @@ class Logging(commands.Cog):
         em.add_field(name="Message", value=f"[Click Here!]({message.jump_url})", inline=False)
         em.set_thumbnail(url=channel.guild.icon_url)
         await log_chat.send(embed=em)
-
-        await self.save()
         #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel):
@@ -305,8 +293,6 @@ class Logging(commands.Cog):
         em.set_thumbnail(url=channel.guild.icon_url)
         em.set_footer(text="CHANNEL ID: " + str(channel.id))
         await log_chat.send(embed=em)
-
-        await self.save()
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_guild_channel_delete(self, channel):
@@ -321,8 +307,6 @@ class Logging(commands.Cog):
         em.set_thumbnail(url=channel.guild.icon_url)
         em.set_footer(text="CHANNEL ID: " + str(channel.id))
         await log_chat.send(embed=em)
-
-        await self.save()
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_guild_channel_update(self, before, after):
@@ -376,12 +360,6 @@ class Logging(commands.Cog):
         em.set_footer(text="ROLE ID: " + str(before.id))
         if valuea != "" and valueb != "":
             await log_chat.send(embed=em)
-        if before.overwrites != after.overwrites:
-            for r, p in iter(before.overwrites):
-                p = iter(p)
-                print(p)
-
-        await self.save()
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_guild_channel_pins_update(self, channel, last_pin):
@@ -403,8 +381,6 @@ class Logging(commands.Cog):
         em.set_thumbnail(url=channel.guild.icon_url)
         em.set_footer(text="CHANNEL ID: " + str(channel.id))
         await log_chat.send(embed=em)
-
-        await self.save()
     #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_guild_integrations_update(self, guild):
@@ -417,8 +393,6 @@ class Logging(commands.Cog):
         inte = await guild.integrations
         em = discord.Embed(title='Integrations', description=inte, color=discord.Color.blue(), timestamp=datetime.utcnow())
         await log_chat.send(embed=em)
-
-        await self.save()
     #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_webhooks_update(self, channel):
@@ -431,8 +405,6 @@ class Logging(commands.Cog):
         inte = await channel.webhooks
         em = discord.Embed(title='Integrations', description=inte, color=discord.Color.blue(), timestamp=datetime.utcnow())
         await log_chat.send(embed=em)
-
-        await self.save()
     #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -451,8 +423,6 @@ class Logging(commands.Cog):
         em.add_field(name="Registered", value=member.created_at.strftime(date_format), inline=False)
         em.set_footer(text="USER ID: " + str(member.id))
         await log_chat.send(embed=em)
-
-        await self.save()
     #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_member_remove(self, member):
@@ -472,8 +442,6 @@ class Logging(commands.Cog):
             em.add_field(name="Roles [{}]".format(len(member.roles)-1), value=role_string, inline=False)
         em.set_footer(text="USER ID: " + str(member.id))
         await log_chat.send(embed=em)
-
-        await self.save()
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
@@ -526,10 +494,7 @@ class Logging(commands.Cog):
                     em.set_footer(text="USER ID: " + str(after.id)) 
             await log_chat.send(embed=em)
         else:
-            await self.save()
             return
-
-        await self.save()
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_user_update(self, before, after):
@@ -558,8 +523,6 @@ class Logging(commands.Cog):
                         em.set_footer(text="USER ID: " + str(before.id))
                         em.set_thumbnail(url=before.avatar_url)
                         await log_chat.send(embed=em)
-
-        await self.save()
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
@@ -637,8 +600,6 @@ class Logging(commands.Cog):
                 em.add_field(name="Before", value=before.premium_subscription_count, inline=False)
                 em.add_field(name="After", value=after.premium_subscription_count, inline=False)
                 await log_chat.send(embed=em)
-
-        await self.save()
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_guild_role_create(self, role):
@@ -652,8 +613,6 @@ class Logging(commands.Cog):
         em.set_thumbnail(url=role.guild.icon_url)
         em.set_footer(text="ROLE ID: " + str(role.id))
         await log_chat.send(embed=em)
-
-        await self.save()
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role):
@@ -667,8 +626,6 @@ class Logging(commands.Cog):
         em.set_thumbnail(url=role.guild.icon_url)
         em.set_footer(text="ROLE ID: " + str(role.id))
         await log_chat.send(embed=em)
-
-        await self.save()
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_guild_role_update(self, before, after):
@@ -911,8 +868,6 @@ class Logging(commands.Cog):
         em.set_footer(text="ROLE ID: " + str(before.id))
         if valuea != None or valueb != None or permissions != '':
             await log_chat.send(embed=em)
-
-        await self.save()
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_guild_emojis_update(self, guild, before, after):
@@ -931,8 +886,6 @@ class Logging(commands.Cog):
             for x in after and not before:
                 em.add_field(name='Emoji', value=str(x))
         await log_chat.send(emoji=em)
-
-        await self.save()
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
@@ -1059,8 +1012,6 @@ class Logging(commands.Cog):
             em8.set_author(name=member, icon_url=member.avatar_url)
             em8.set_footer(text="USER ID: " + str(member.id))
             await log_chat.send(embed=em8)
-
-        await self.save()
     #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_member_ban(self, guild, user):
@@ -1077,8 +1028,6 @@ class Logging(commands.Cog):
         em.set_author(name=user.name + "#" + user.discriminator, icon_url=user.avatar_url)
         em.set_thumbnail(url=user.avatar_url)
         await log_chat.send(embed=em)
-
-        await self.save()
     #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_member_unban(self, guild, user):
@@ -1092,8 +1041,6 @@ class Logging(commands.Cog):
         em.set_author(name=user.name + "#" + user.discriminator, icon_url=user.avatar_url)
         em.set_thumbnail(url=user.avatar_url)
         await log_chat.send(embed=em)
-
-        await self.save()
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_invite_create(self, invite):
@@ -1110,8 +1057,6 @@ class Logging(commands.Cog):
         em.set_thumbnail(url=invite.guild.icon_url)
         em.set_footer(text="USER ID: " + str(invite.inviter.id))
         await log_chat.send(embed=em)
-
-        await self.save()
     #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @commands.Cog.listener()
     async def on_invite_delete(self, invite):
@@ -1126,8 +1071,6 @@ class Logging(commands.Cog):
         em.add_field(name="Channel", value=str(invite.channel), inline=True)
         em.set_thumbnail(url=invite.guild.icon_url)
         await log_chat.send(embed=em)
-
-        await self.save()
 
 def setup(bot):
     bot.add_cog(Logging(bot))
