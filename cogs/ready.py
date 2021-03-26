@@ -31,10 +31,10 @@ class Ready(commands.Cog):
         current_time = now.strftime("%H:%M:%S")
         print("Current Time =", current_time)
         await self.bot.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game("The wait for $"))
-        self.msg1.start()
-        self.msg2.start()
-        self.msg3.start()
-        self.msg4.start()
+        #self.msg1.start()
+        #self.msg2.start()
+        #self.msg3.start()
+        #self.msg4.start()
 
 
     # Message 1
@@ -73,7 +73,7 @@ class Ready(commands.Cog):
     @msg1.before_loop
     async def before_msg1(self):
         for _ in range(60*60*24):
-            if datetime.now().hour == 22 and datetime.now().minute == 0:
+            if datetime.now().hour == 15 and datetime.now().minute == 7:
                 return
             await asyncio.sleep(1)
 
@@ -194,7 +194,7 @@ class Ready(commands.Cog):
     @msg3.before_loop
     async def before_msg3(self):
         for _ in range(60*60*24):
-            if datetime.now().hour == 22 and datetime.now().minute == 0:
+            if datetime.now().hour == 15 and datetime.now().minute == 8:
                 return
             await asyncio.sleep(1)
 

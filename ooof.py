@@ -37,6 +37,37 @@ kicks = False
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @bot.command()
+async def ship(ctx, mem1: discord.Member=None, mem2: discord.Member=None):
+    if mem1 == None or mem2 == None:
+        em = discord.Embed(description=f"{bot.CROSS_MARK} Please mention 2 members!")
+        await ctx.send(embed=em)
+        return
+    else:
+        l1 = len(mem1.display_name)
+        l2 = len(mem2.display_name)
+        n1 = l1/2
+        n2 = l2/2
+        final = mem1.display_name[0:int(n1)]+mem2.display_name[int(n2):].lower()
+        em = discord.Embed(description=mem1.display_name + " 💓 " + mem2.display_name + "\n ▶️ " + final)
+        await ctx.send(embed=em)
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.command()
+@commands.has_permissions(manage_roles=True)
+async def unmute(ctx, mem: discord.Member=None, s: str=None):
+    if mem == None:
+        em = discord.Embed(description=f"{bot.CROSS_MARK} Please mention a member to unmute!")
+        await ctx.send(embed=em)
+        return
+    role = ctx.guild.get_role(bot.data['mute'][str(ctx.guild.id)])
+    if role in mem.roles:
+        await mem.remove_roles(role)
+        embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Unmuted {mem.mention} succesfully!")
+        await ctx.send(embed=embed)
+    else:
+        em = discord.Embed(description=f"{bot.CROSS_MARK} Member not currently muted!")
+        await ctx.send(embed=em)
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@bot.command()
 @commands.has_permissions(manage_roles=True)
 async def mute(ctx, mem: discord.Member=None, s: str=None):
     if mem == None:
@@ -60,7 +91,9 @@ async def mute(ctx, mem: discord.Member=None, s: str=None):
             role = await ctx.guild.create_role(name='muted')
             bot.data['mute'][str(ctx.guild.id)] = role.id
             for chn in ctx.guild.channels:
-                await chn.set_permissions(role, read_messages=True, send_messages=False)
+                await chn.set_permissions(role, send_messages=False)
+            embed = discord.Embed(description=f"<:tick_mark:814801884358901770> Setup the mute role for this server!")
+            await ctx.send(embed=embed)
         return
     else:
         val = 0

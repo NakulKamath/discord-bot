@@ -863,10 +863,10 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         val1 = int(round(player.position/player.current.length*25))
         val2 = 25-int(round(player.position/player.current.length*25))
         if val1 > 0:
-            vall=f"[{'▬'*val1}](https://discord.gg/jDMYEV5)"
+            vall=f"[{'▬'*val1}]({player.current.uri})"
         else:
             vall="▬"*val1
-        embed.add_field(name=f"**Time** - `{pos}/{clen}`", value=vall + ' :radio_button: ' + "▬"*val2)
+        embed.add_field(name=f"**Time** - `{pos}/{clen}`", value=vall + f' [:radio_button:]({player.current.uri}) ' + "▬"*val2)
 
         await ctx.send(embed=embed)
 
